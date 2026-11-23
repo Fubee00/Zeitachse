@@ -106,6 +106,18 @@ footer{color:var(--mute);font-size:12px;margin:22px 2px 30px}
 .attr{position:absolute;right:56px;bottom:66px;z-index:2;font-size:10px;color:#555;background:rgba(255,255,255,.8);padding:1px 6px;border-radius:4px}
 .attr a{color:inherit}
 .toast{position:absolute;left:50%;top:60px;transform:translateX(-50%);z-index:4;background:var(--txt);color:#fff;border-radius:10px;padding:8px 12px;font-size:12px;max-width:85%}
+.hotel{border-bottom:1px solid var(--line);padding:12px 2px}
+.hrow{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.hrow>div:first-child{flex:1;min-width:0}
+.hname{width:100%;border:0;border-bottom:1px dashed transparent;font-weight:600;font-size:14px;padding:2px 0;background:none}
+.hname:hover,.hname:focus{border-bottom-color:var(--line);outline:none}
+.hname::placeholder{color:var(--txt);opacity:.75}
+.stars{display:flex;flex:none}
+.stars button{border:0;background:none;font-size:18px;color:#d0d5dd;cursor:pointer;padding:0 1px}
+.stars button.on{color:#f5a524}
+.hnote{width:100%;margin-top:8px;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:13px;resize:vertical}
+.hlinks{display:flex;gap:14px;margin-top:6px;font-size:13px}
+.hlinks a{color:var(--blue);text-decoration:none;font-weight:500}
 .hidden{display:none!important}
 </style>
 </head>
@@ -188,7 +200,8 @@ footer{color:var(--mute);font-size:12px;margin:22px 2px 30px}
       </div>
       <div class="pane" id="p-diary"><div id="diary"></div></div>
       <div class="pane" id="p-hotels">
-        <table><thead><tr><th>Ort</th><th>Nächte</th><th class="num">Anzahl</th></tr></thead><tbody id="tHotels"></tbody></table>
+        <p class="m" style="margin:10px 2px">„In Maps öffnen“ zeigt die genaue Unterkunft mit Namen. Trag dir Name, Sterne und eine Notiz ein – das bleibt gespeichert und taucht nächstes Jahr beim gleichen Hotel wieder auf.</p>
+        <div id="tHotels"></div>
       </div>
       <div class="pane" id="p-months">
         <table><thead><tr><th>Monat</th><th class="num">Auto gesamt</th><th class="num">davon Arbeit</th></tr></thead><tbody id="tMonths"></tbody></table>
@@ -438,7 +451,7 @@ function drawPins(){
   pins.length=0;if(!R)return;const sz=Math.min(1,.6+.1*T.k);
   if(st.layers.hotels)for(const h of R.hotels){if(!h.work)continue;const [x,y]=XY(h.lat,h.lon);if(x<-10||y<-10||x>W+10||y>H+10)continue;
     const r=(5+Math.min(5,h.work*.5))*sz;ctx.fillStyle='#2f6fde';ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(x-r,y-r,2*r,2*r,3);ctx.fill();ctx.stroke();
-    pins.push({x,y,r,html:()=>`<b>${placeName(h.lat,h.lon)}</b><span>${h.work} Hotelnacht${h.work>1?'e':''} · ${h.nights.slice(0,6).map(fmtDay).join(', ')}${h.nights.length>6?' …':''}</span>`})}
+    pins.push({x,y,r,html:()=>`<b>${esc((notes[hkey(h)]||{}).name)||placeName(h.lat,h.lon)}</b>${(notes[hkey(h)]||{}).stars?'<span style="color:#f5a524">'+'★'.repeat(notes[hkey(h)].stars)+'</span><br>':''}<span>${h.work} Hotelnacht${h.work>1?'e':''} · ${h.nights.slice(0,6).map(fmtDay).join(', ')}${h.nights.length>6?' …':''}</span>`})}
   if(st.layers.sites){const mh=R.sites[0]?.hours||1;for(const s of R.sites){const [x,y]=XY(s.lat,s.lon);if(x<-10||y<-10||x>W+10||y>H+10)continue;
     const r=(4+7*Math.sqrt(s.hours/mh))*sz;ctx.fillStyle='#e4572e';ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();ctx.stroke();
     pins.push({x,y,r,html:()=>`<b>${placeName(s.lat,s.lon)}</b><span>${nf.format(s.hours)} Std an ${s.days.length} Tag${s.days.length>1?'en':''} · ${s.kmWork} km von der Firma<br>erstmals ${fmtDayY(s.days[0][0])}</span>`})}}
@@ -555,10 +568,27 @@ function renderDiary(){
   $('#diary').innerHTML=Object.keys(mons).sort().reverse().map((m,i)=>`<details${i===0?' open':''}><summary>${MON[+m.slice(5)-1]} ${m.slice(0,4)}<span>${mons[m].length} Tage</span></summary>${mons[m].map(d=>`<div class="drow"><span class="d">${fmtDay(d)}</span><div>${by[d].sort((a,b)=>b[1]-a[1]).map(([o,h])=>`<span class="pill">${o} · ${hfmt(h)}</span>`).join('')}${hotel[d]?`<span class="pill h">Hotel ${hotel[d]}</span>`:''}</div><span class="m" style="text-align:right">${nf.format(km[d]||0)} km<br><button class="free-btn" data-free="${d}">war frei</button></span></div>`).join('')}</details>`).join('')||'<p class="m">Noch keine Einträge.</p>';
   $$('#diary [data-free]').forEach(b=>b.onclick=e=>{e.preventDefault();b.textContent='…';markFree(b.dataset.free)});
 }
+/* Hotel-Notizen: pro Unterkunft (Google-Place-ID bzw. Koordinaten) im Browser gespeichert */
+let notes=LS.get('zeitachse.hotels',{});
+const hkey=h=>h.pid||(h.lat.toFixed(3)+','+h.lon.toFixed(3));
+const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
+const mapsUrl=h=>`https://www.google.com/maps/search/?api=1&query=${h.lat},${h.lon}`+(h.pid?`&query_place_id=${encodeURIComponent(h.pid)}`:'');
 function renderHotels(){
   const list=R.hotels.filter(h=>h.work);
-  $('#tHotels').innerHTML=list.map(h=>`<tr class="click" data-la="${h.lat}" data-lo="${h.lon}"><td>${placeName(h.lat,h.lon)}</td><td class="m">${h.nights.map(fmtDay).join(', ')}</td><td class="num">${h.work}</td></tr>`).join('')+`<tr><td colspan="2"><b>Gesamt</b></td><td class="num"><b>${list.reduce((a,h)=>a+h.work,0)}</b></td></tr>`;
-  $$('#tHotels tr.click').forEach(tr=>tr.onclick=()=>{if(!st.layers.hotels)$('#layers [data-l=hotels]').click();flyTo(+tr.dataset.la,+tr.dataset.lo,10)});
+  const total=list.reduce((a,h)=>a+h.work,0);
+  $('#tHotels').innerHTML=list.map((h,i)=>{const n=notes[hkey(h)]||{};const town=placeName(h.lat,h.lon);
+    return `<div class="hotel" data-i="${i}">
+      <div class="hrow"><div><input class="hname" placeholder="Name eintragen (${esc(town)})" value="${esc(n.name)}"><div class="m">${town} · ${h.work} Nacht${h.work>1?'´':''} · ${h.nights.slice(0,8).map(fmtDayY).join(', ')}${h.nights.length>8?' …':''}</div></div>
+      <div class="stars">${[1,2,3,4,5].map(k=>`<button data-k="${k}" class="${(n.stars||0)>=k?'on':''}" aria-label="${k} Sterne">★</button>`).join('')}</div></div>
+      <textarea class="hnote" rows="1" placeholder="Notiz: Parkplatz für den Bus? Frühstück? Wieder hin?">${esc(n.note)}</textarea>
+      <div class="hlinks"><a href="${mapsUrl(h)}" target="_blank" rel="noopener">In Maps öffnen</a><a href="#" data-fly>Auf der Karte</a></div>
+    </div>`}).join('').replace(/´/g,'e')+`<div class="m" style="padding:10px 2px">Gesamt ${total} Hotelnächte für die Arbeit.</div>`;
+  $$('#tHotels .hotel').forEach(el=>{const h=list[+el.dataset.i],k=hkey(h);
+    const save=()=>{notes[k]={...(notes[k]||{}),name:el.querySelector('.hname').value.trim(),note:el.querySelector('.hnote').value.trim()};LS.set('zeitachse.hotels',notes)};
+    el.querySelector('.hname').onchange=save;el.querySelector('.hnote').onchange=save;
+    el.querySelectorAll('.stars button').forEach(b=>b.onclick=()=>{const v=+b.dataset.k;notes[k]={...(notes[k]||{}),stars:(notes[k]?.stars===v?0:v)};LS.set('zeitachse.hotels',notes);el.querySelectorAll('.stars button').forEach(x=>x.classList.toggle('on',+x.dataset.k<=(notes[k].stars||0)))});
+    el.querySelector('[data-fly]').onclick=e=>{e.preventDefault();if(!st.layers.hotels)$('#layers [data-l=hotels]').click();flyTo(h.lat,h.lon,12)};
+  });
 }
 function renderMonths(){
   const s=R.stats,ms=Object.keys(s.kmMonth).sort();

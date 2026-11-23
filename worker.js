@@ -113,7 +113,7 @@ function analyse(opts) {
   for (const s of segs) {
     const v = s.visit; if (!v) continue;
     const p = ll(v.topCandidate?.placeLocation?.latLng); if (!p || isNaN(p[0])) continue;
-    visits.push({ st: s.startTime, en: s.endTime, p, type: v.topCandidate.semanticType });
+    visits.push({ st: s.startTime, en: s.endTime, p, type: v.topCandidate.semanticType, pid: v.topCandidate.placeId || null });
   }
   if (!home) {
     const hv = visits.filter(v => v.type === 'HOME');
@@ -276,15 +276,28 @@ function analyse(opts) {
     if (minOf(v.st) > 180) d = addDays(d, 1); // erste 03:00-Uhr nach Beginn
     while (d + 'T03:00' >= v.st.slice(0, 16) && d + 'T03:00' <= v.en.slice(0, 16)) {
       const night = addDays(d, -1);
-      if (!nights.has(night)) nights.set(night, v.p);
+      if (!nights.has(night)) nights.set(night, { p: v.p, pid: v.pid });
       d = addDays(d, 1);
     }
   }
-  const hotels = cluster([...nights].map(([n, p]) => ({ p, n })), 1.5).map(c => {
-    const ns = c.items.map(i => i.n).sort();
+  // Je Unterkunft gruppieren: Google-Place-ID, sonst Koordinaten auf ~100 m
+  const byStay = new Map();
+  for (const [n, x] of nights) {
+    const key = x.pid || (x.p[0].toFixed(3) + ',' + x.p[1].toFixed(3));
+    if (!byStay.has(key)) byStay.set(key, { p: x.p, pid: x.pid, ns: [] });
+    byStay.get(key).ns.push(n);
+  }
+  // Gleiche Unterkunft mit leicht anderem GPS-Punkt zusammenlegen (< 250 m)
+  const stays = [];
+  for (const c of [...byStay.values()].sort((x, y) => y.ns.length - x.ns.length)) {
+    const m = stays.find(x => dist(x.p, c.p) < 0.25);
+    if (m) m.ns.push(...c.ns); else stays.push(c);
+  }
+  const hotels = stays.map(c => {
+    const ns = c.ns.sort();
     // Arbeitsnacht = Nacht mitten in einer Arbeitstour
     const workN = ns.filter(n => inWork(n + 'T23:30') && !isFree(n));
-    return { lat: c.p[0], lon: c.p[1], nights: ns, work: workN.length };
+    return { lat: c.p[0], lon: c.p[1], pid: c.pid, nights: ns, work: workN.length };
   }).sort((a, b) => b.nights.length - a.nights.length);
 
   // --- Einsatzorte: Aufenthalte Mo–Fr 6–20 Uhr, auswärts ---
