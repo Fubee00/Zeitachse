@@ -42,7 +42,7 @@ function normalize(json) {
   if (Array.isArray(json)) {
     const segs = json.map(e => {
       const s = { startTime: e.startTime, endTime: e.endTime };
-      if (e.visit) s.visit = { topCandidate: { semanticType: e.visit.topCandidate?.semanticType, placeLocation: { latLng: (e.visit.topCandidate?.placeLocation || '').replace('geo:', '') } } };
+      if (e.visit) s.visit = { topCandidate: { semanticType: String(e.visit.topCandidate?.semanticType || '').toUpperCase(), placeId: e.visit.topCandidate?.placeID || e.visit.topCandidate?.placeId, placeLocation: { latLng: (e.visit.topCandidate?.placeLocation || '').replace('geo:', '') } } };
       if (e.activity) s.activity = { start: { latLng: (e.activity.start || '').replace('geo:', '') }, end: { latLng: (e.activity.end || '').replace('geo:', '') }, distanceMeters: +e.activity.distanceMeters || 0, topCandidate: { type: (e.activity.topCandidate?.type || '').toUpperCase().replace('IN PASSENGER VEHICLE', 'IN_PASSENGER_VEHICLE') } };
       if (e.timelinePath) s.timelinePath = e.timelinePath.map(p => ({ point: (p.point || '').replace('geo:', ''), time: addMinutes(e.startTime, +p.durationMinutesOffsetFromStartTime || 0) }));
       return s;
