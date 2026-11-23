@@ -26,9 +26,13 @@ Die Datei (`Zeitachse.json` / `Timeline.json`) dann auf der Seite auswählen ode
   oder morgens direkt von daheim zur Baustelle (bzw. am Vorabend weit weg ins Hotel).
 - Sie endet, sobald man wieder in der Firma oder daheim ist. Fahrten danach zählen nicht.
 - Der Weg daheim ↔ Firma zählt nie. Mehrtägige Touren mit Hotel laufen bis zur Rückkehr durch.
-- Wochenenden, gesetzliche Feiertage (Italien + Pfingstmontag) und eingetragene freie Tage zählen nicht.
+- Nur Arbeitstage zählen (einstellbar, Standard Mo–Fr). Gesetzliche Feiertage werden nach Wohnort erkannt
+  (Südtirol, Italien, Österreich, Deutschland/Bayern/BW, Schweiz) und zählen nicht – genauso wie eingetragene freie Tage.
+- **Touren-Check:** Touren, die nicht in der Firma starten und weit weg gehen, werden als „Urlaub?“ markiert.
+  Mit einem Tipp als „war frei“ oder „war Arbeit“ bestätigen.
+- **Ohne Firma:** Wer immer direkt von daheim startet, setzt in den Einstellungen „Keine Firma“.
 - **Einsatzorte** = Aufenthalte während einer Tour zwischen 6 und 20 Uhr, ab 3 Std insgesamt.
-- **Hotelnächte** = Nächte über 40 km von daheim mitten in einer Arbeitstour.
+- **Hotelnächte** = Nächte auswärts (Standard ab 40 km, einstellbar) mitten in einer Arbeitstour.
 
 ## Einstellungen
 
