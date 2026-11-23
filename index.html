@@ -119,6 +119,8 @@ footer{color:var(--mute);font-size:12px;margin:22px 2px 30px}
 .hnote{width:100%;margin-top:8px;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:13px;resize:vertical}
 .hlinks{display:flex;gap:14px;margin-top:6px;font-size:13px}
 .hlinks a{color:var(--blue);text-decoration:none;font-weight:500}
+.gbox{margin:10px 2px 0}
+.gname{font-size:12px;color:var(--mute)}
 .hidden{display:none!important}
 </style>
 </head>
@@ -202,6 +204,9 @@ footer{color:var(--mute);font-size:12px;margin:22px 2px 30px}
       </div>
       <div class="pane" id="p-diary"><div id="diary"></div></div>
       <div class="pane" id="p-hotels">
+        <div class="gbox" id="gbox">
+          <div class="row" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn pri" id="gfetch">Hotelnamen von Google holen</button><span class="m" id="gstatus"></span></div>
+        </div>
         <p class="m" style="margin:10px 2px">„In Maps öffnen“ zeigt die genaue Unterkunft mit Namen. Trag dir Name, Sterne und eine Notiz ein – das bleibt gespeichert und taucht nächstes Jahr beim gleichen Hotel wieder auf.</p>
         <div id="tHotels"></div>
       </div>
@@ -233,6 +238,17 @@ footer{color:var(--mute);font-size:12px;margin:22px 2px 30px}
               <li>Der Weg daheim ↔ Firma zählt nie. Mehrtägige Touren mit Hotel laufen durch bis zur Rückkehr.</li>
               <li>Nur Arbeitstage zählen – Feiertage und eingetragene freie Tage nicht.</li>
             </ul></div>
+          <div><label for="gkey">Google-API-Schlüssel <span class="m" style="font-weight:400">(optional, für Hotelnamen)</span></label>
+            <div class="row"><input id="gkey" type="password" autocomplete="off" placeholder="AIza…" style="flex:1;min-width:200px;border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-family:ui-monospace,Menlo,monospace;font-size:13px"><button class="btn" id="gsave">Speichern</button></div>
+            <details class="m" style="border:0;margin-top:6px"><summary style="padding:4px 0;font-weight:500;font-size:13px">So bekommst du einen Schlüssel</summary>
+              <ol style="margin:6px 0;padding-left:18px">
+                <li>console.cloud.google.com öffnen, Projekt anlegen, Abrechnungskonto verbinden (für ein paar Dutzend Abfragen im Monat fallen keine Kosten an).</li>
+                <li>Unter „APIs &amp; Dienste → Bibliothek“ <b>Maps JavaScript API</b> und <b>Places API (New)</b> aktivieren.</li>
+                <li>„Anmeldedaten → Anmeldedaten erstellen → API-Schlüssel“.</li>
+                <li>Schlüssel einschränken: Websites → <code>https://fubee00.github.io/*</code> (bzw. eure Adresse), APIs → nur die zwei oben.</li>
+              </ol>
+              Der Schlüssel bleibt nur in diesem Browser gespeichert. Funktioniert auf GitHub Pages, nicht in der Claude-Vorschau.
+            </details></div>
           <div><label>Gespeicherte Daten</label><div class="row"><button class="btn" id="forget">Datei aus diesem Browser löschen</button></div>
             <div class="m">Die Datei bleibt nur in diesem Browser gespeichert, damit du sie nicht jedes Mal neu laden musst.</div></div>
         </div>
@@ -461,7 +477,7 @@ function drawPins(){
   pins.length=0;if(!R)return;const sz=Math.min(1,.6+.1*T.k);
   if(st.layers.hotels)for(const h of R.hotels){if(!h.work)continue;const [x,y]=XY(h.lat,h.lon);if(x<-10||y<-10||x>W+10||y>H+10)continue;
     const r=(5+Math.min(5,h.work*.5))*sz;ctx.fillStyle='#2f6fde';ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(x-r,y-r,2*r,2*r,3);ctx.fill();ctx.stroke();
-    pins.push({x,y,r,html:()=>`<b>${esc((notes[hkey(h)]||{}).name)||placeName(h.lat,h.lon)}</b>${(notes[hkey(h)]||{}).stars?'<span style="color:#f5a524">'+'★'.repeat(notes[hkey(h)].stars)+'</span><br>':''}<span>${h.work} Hotelnacht${h.work>1?'e':''} · ${h.nights.slice(0,6).map(fmtDay).join(', ')}${h.nights.length>6?' …':''}</span>`})}
+    pins.push({x,y,r,html:()=>`<b>${esc(hDisplay(h))||placeName(h.lat,h.lon)}</b>${(notes[hkey(h)]||{}).stars?'<span style="color:#f5a524">'+'★'.repeat(notes[hkey(h)].stars)+'</span><br>':''}<span>${h.work} Hotelnacht${h.work>1?'e':''} · ${h.nights.slice(0,6).map(fmtDay).join(', ')}${h.nights.length>6?' …':''}</span>`})}
   if(st.layers.sites){const mh=R.sites[0]?.hours||1;for(const s of R.sites){const [x,y]=XY(s.lat,s.lon);if(x<-10||y<-10||x>W+10||y>H+10)continue;
     const r=(4+7*Math.sqrt(s.hours/mh))*sz;ctx.fillStyle='#e4572e';ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();ctx.stroke();
     pins.push({x,y,r,html:()=>`<b>${placeName(s.lat,s.lon)}</b><span>${nf.format(s.hours)} Std an ${s.days.length} Tag${s.days.length>1?'en':''} · ${s.kmWork} km ${R.work&&!settings.noWork?'von der Firma':'von daheim'}<br>erstmals ${fmtDayY(s.days[0][0])}</span>`})}}
@@ -600,7 +616,7 @@ function renderTours(){
 }
 function renderDiary(){
   const by={};R.sites.forEach(s=>s.days.forEach(([d,h])=>(by[d]||=[]).push([placeName(s.lat,s.lon),h])));
-  const hotel={};R.hotels.forEach(h=>h.work&&h.nights.forEach(n=>hotel[n]=esc((notes[hkey(h)]||{}).name)||placeName(h.lat,h.lon)));
+  const hotel={};R.hotels.forEach(h=>h.work&&h.nights.forEach(n=>hotel[n]=esc(hDisplay(h))||placeName(h.lat,h.lon)));
   const km=R.stats.kmWorkDay||{};
   const mons={};Object.keys(by).sort().forEach(d=>(mons[d.slice(0,7)]||=[]).push(d));
   const hfmt=h=>h<1?Math.round(h*60)+' min':(Math.round(h*2)/2).toString().replace('.',',')+' h';
@@ -612,16 +628,17 @@ function renderDiary(){
 let notes=LS.get('zeitachse.hotels',{});
 const hkey=h=>h.pid||(h.lat.toFixed(3)+','+h.lon.toFixed(3));
 const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
+const hDisplay=h=>{const n=notes[hkey(h)]||{};return n.name||n.gname||''};
 const mapsUrl=h=>`https://www.google.com/maps/search/?api=1&query=${h.lat},${h.lon}`+(h.pid?`&query_place_id=${encodeURIComponent(h.pid)}`:'');
 function renderHotels(){
   const list=R.hotels.filter(h=>h.work);
   const total=list.reduce((a,h)=>a+h.work,0);
   $('#tHotels').innerHTML=list.map((h,i)=>{const n=notes[hkey(h)]||{};const town=placeName(h.lat,h.lon);
     return `<div class="hotel" data-i="${i}">
-      <div class="hrow"><div><input class="hname" placeholder="Name eintragen (${esc(town)})" value="${esc(n.name)}"><div class="m">${town} · ${h.work} ${h.work>1?'Nächte':'Nacht'} · ${h.nights.slice(0,8).map(fmtDayY).join(', ')}${h.nights.length>8?' …':''}</div></div>
+      <div class="hrow"><div><input class="hname" placeholder="${esc(n.gname||'Name eintragen ('+town+')')}" value="${esc(n.name)}">${n.gaddr?`<div class="gname">${esc(n.gaddr)}${n.grating?' · Google '+String(n.grating).replace('.',',')+' ★':''}</div>`:''}<div class="m">${town} · ${h.work} ${h.work>1?'Nächte':'Nacht'} · ${h.nights.slice(0,8).map(fmtDayY).join(', ')}${h.nights.length>8?' …':''}</div></div>
       <div class="stars">${[1,2,3,4,5].map(k=>`<button data-k="${k}" class="${(n.stars||0)>=k?'on':''}" aria-label="${k} Sterne">★</button>`).join('')}</div></div>
       <textarea class="hnote" rows="1" placeholder="Notiz: Parkplatz für den Bus? Frühstück? Wieder hin?">${esc(n.note)}</textarea>
-      <div class="hlinks"><a href="${mapsUrl(h)}" target="_blank" rel="noopener">In Maps öffnen</a><a href="#" data-fly>Auf der Karte</a></div>
+      <div class="hlinks"><a href="${esc(n.guri||mapsUrl(h))}" target="_blank" rel="noopener">In Maps öffnen</a><a href="#" data-fly>Auf der Karte</a></div>
     </div>`}).join('')+`<div class="m" style="padding:10px 2px">Gesamt ${total} Hotelnächte für die Arbeit.</div>`;
   $$('#tHotels .hotel').forEach(el=>{const h=list[+el.dataset.i],k=hkey(h);
     const save=()=>{notes[k]={...(notes[k]||{}),name:el.querySelector('.hname').value.trim(),note:el.querySelector('.hnote').value.trim()};LS.set('zeitachse.hotels',notes)};
@@ -631,6 +648,44 @@ function renderHotels(){
     el.querySelector('[data-fly]').onclick=e=>{e.preventDefault();if(!st.layers.hotels)$('#layers [data-l=hotels]').click();flyTo(h.lat,h.lon,12)};
   });
 }
+/* Hotelnamen über die Google Places API (Maps JavaScript API, Place-Klasse) */
+const GK='zeitachse.gkey';
+function loadMapsJs(key){
+  if(window.google?.maps?.importLibrary)return Promise.resolve();
+  return new Promise((res,rej)=>{
+    window.__gmAuthFail=()=>rej(new Error('Schlüssel abgelehnt (gm_authFailure) – Einschränkungen/aktivierte APIs prüfen'));
+    window.gm_authFailure=()=>window.__gmAuthFail();
+    const sc=document.createElement('script');
+    sc.src=`https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&v=weekly&language=de&loading=async&callback=__gmReady`;
+    window.__gmReady=()=>res();sc.onerror=()=>rej(new Error('Google Maps konnte nicht geladen werden (blockiert oder offline)'));
+    document.head.appendChild(sc);
+  });
+}
+async function fetchHotelNames(){
+  const key=LS.get(GK,'');const out=$('#gstatus');
+  if(!key){out.textContent='Zuerst unter Einstellungen einen Google-API-Schlüssel eintragen.';return}
+  const list=R.hotels.filter(h=>h.work&&h.pid&&!(notes[hkey(h)]||{}).gname);
+  if(!list.length){out.textContent='Alle Hotels haben schon einen Namen.';return}
+  try{
+    out.textContent='Google wird geladen …';await loadMapsJs(key);
+    const {Place}=await google.maps.importLibrary('places');
+    let ok=0,fail=0,lastErr='';
+    for(const h of list){
+      out.textContent=`Hole Namen … ${ok+fail+1}/${list.length}`;
+      try{
+        const p=new Place({id:h.pid,requestedLanguage:'de'});
+        await p.fetchFields({fields:['displayName','formattedAddress','rating','googleMapsURI']});
+        const k=hkey(h);notes[k]={...(notes[k]||{}),gname:p.displayName||'',gaddr:p.formattedAddress||'',grating:p.rating||null,guri:p.googleMapsURI||''};ok++;
+      }catch(e){fail++;lastErr=e.message||String(e)}
+      await new Promise(r=>setTimeout(r,120));
+    }
+    LS.set('zeitachse.hotels',notes);renderHotels();renderDiary();redraw();
+    out.textContent=`${ok} Namen geholt`+(fail?`, ${fail} fehlgeschlagen (${lastErr.slice(0,120)})`:'');
+  }catch(e){out.textContent='Fehler: '+(e.message||e)}
+}
+$('#gfetch').onclick=fetchHotelNames;
+$('#gsave').onclick=()=>{LS.set(GK,$('#gkey').value.trim());$('#gsave').textContent='Gespeichert';setTimeout(()=>$('#gsave').textContent='Speichern',1500)};
+$('#gkey').value=LS.get(GK,'');
 function renderMonths(){
   const s=R.stats,ms=Object.keys(s.kmMonth).sort();
   $('#tMonths').innerHTML=ms.map(m=>`<tr><td>${MON[+m.slice(5)-1]} ${m.slice(0,4)}</td><td class="num">${nf.format(s.kmMonth[m])}</td><td class="num">${nf.format(s.kmWorkMonth[m]||0)}</td></tr>`).join('')+`<tr><td><b>Gesamt</b></td><td class="num"><b>${nf.format(s.kmCar)}</b></td><td class="num"><b>${nf.format(s.kmWork)}</b></td></tr>`;

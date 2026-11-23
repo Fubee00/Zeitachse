@@ -44,6 +44,18 @@ Die Datei (`Zeitachse.json` / `Timeline.json`) dann auf der Seite auswählen ode
   2026-08-15 bis 2026-08-22
   ```
 
+## Hotelnamen (optional)
+
+Der Export enthält nur Google-Place-IDs, keine Namen. Mit einem eigenen Google-API-Schlüssel
+holt die Seite die Namen, Adresse und Bewertung der Hotels (Tab *Hotels → Hotelnamen von Google holen*).
+
+1. console.cloud.google.com → Projekt anlegen, Abrechnung verbinden
+2. **Maps JavaScript API** und **Places API (New)** aktivieren
+3. API-Schlüssel erstellen und auf die eigene Seite (`https://<name>.github.io/*`) und diese zwei APIs einschränken
+4. Schlüssel unter *Einstellungen* eintragen – er bleibt nur im Browser
+
+Für ein paar Dutzend Hotels bleibt man im Gratis-Kontingent von Google. Namen werden gespeichert und nur einmal abgefragt.
+
 ## Online stellen (GitHub Pages)
 
 Repo → *Settings* → *Pages* → *Deploy from a branch* → `main` / `root`.
