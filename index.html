@@ -253,6 +253,8 @@ Promise.all([fetch('data/laender.json').then(r=>r.json()),fetch('data/strassen.j
   .then(([l,s,c])=>{BASE={land:l,...s};CITIES=c;buildPaths();redraw()});
 fetch('data/orte.json').then(r=>r.json()).then(g=>{GAZ=g;gazGrid=new Map();for(const x of g){const k=Math.floor(x[0]*10)+','+Math.floor(x[1]*10);(gazGrid.get(k)||gazGrid.set(k,[]).get(k)).push(x)}if(R)renderTables()});
 function placeName(la,lo){
+  // In der Nähe einer größeren Stadt lieber den Stadtnamen (statt Ortsteil)
+  if(CITIES){const c=Math.cos(la*Math.PI/180);for(const x of CITIES){if(x[3]>8)continue;const d=Math.hypot(x[0]-la,(x[1]-lo)*c)*111;if(d<(x[3]<=5?12:6))return x[2]}}
   if(!gazGrid)return la.toFixed(3)+', '+lo.toFixed(3);
   let best=null,bd=1e9;const a=Math.floor(la*10),b=Math.floor(lo*10);
   for(let i=-2;i<=2;i++)for(let j=-2;j<=2;j++)for(const x of gazGrid.get((a+i)+','+(b+j))||[]){const d=(x[0]-la)**2+((x[1]-lo)*Math.cos(la*Math.PI/180))**2;if(d<bd){bd=d;best=x}}
