@@ -96,6 +96,13 @@ summary span{font-weight:400;color:var(--mute);font-size:13px}
 .form textarea{width:100%;min-height:110px;border:1px solid var(--line);border-radius:10px;padding:10px;font-family:ui-monospace,Menlo,monospace;font-size:13px}
 .coord{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--mute)}
 footer{color:var(--mute);font-size:12px;margin:22px 2px 30px}
+.hint-bar{background:#fff7e6;border:1px solid #f5d9a6;color:#7a4b00;border-radius:12px;padding:10px 12px;font-size:13px;margin-bottom:12px}
+.hint-bar a{color:inherit;font-weight:600}
+.free-btn{border:1px solid var(--line);background:#fff;border-radius:7px;font-size:11px;padding:2px 7px;cursor:pointer;color:var(--mute);margin-top:4px}
+.free-btn:hover{color:var(--txt)}
+.check{display:flex;gap:8px;align-items:center;font-weight:500}
+.explain{font-size:13px;color:var(--mute);background:var(--soft);border-radius:10px;padding:10px 12px}
+.explain ul{margin:6px 0 0;padding-left:18px}
 .hidden{display:none!important}
 </style>
 </head>
@@ -126,11 +133,12 @@ footer{color:var(--mute);font-size:12px;margin:22px 2px 30px}
   <main id="app" class="hidden">
     <div class="stats">
       <div class="card stat"><div class="v" id="sKm">–</div><div class="l">km mit dem Auto</div></div>
-      <div class="card stat"><div class="v" id="sWork">–</div><div class="l">km Arbeit (Mo–Fr ab Firma)</div></div>
+      <div class="card stat"><div class="v" id="sWork">–</div><div class="l">km Arbeit</div></div>
       <div class="card stat"><div class="v" id="sNights">–</div><div class="l">Hotelnächte Arbeit</div></div>
       <div class="card stat"><div class="v" id="sRec">–</div><div class="l" id="sRecL">Rekordtag</div></div>
     </div>
 
+    <div class="hint-bar hidden" id="freehint">Noch kein Urlaub eingetragen – Urlaubsfahrten unter der Woche zählen sonst als Arbeit. <a href="#" id="gofree">Jetzt eintragen</a></div>
     <div class="card" id="mapcard">
       <canvas id="base"></canvas><canvas id="over"></canvas>
       <div class="tb tl">
@@ -182,7 +190,15 @@ footer{color:var(--mute);font-size:12px;margin:22px 2px 30px}
           <div><label for="free">Urlaub &amp; freie Tage</label>
             <textarea id="free" placeholder="2025-12-24 bis 2026-01-06&#10;2026-08-15 bis 2026-08-22&#10;2026-06-26"></textarea>
             <div class="m">Ein Tag oder Zeitraum pro Zeile. Diese Tage zählen nicht als Arbeit.</div></div>
+          <label class="check"><input type="checkbox" id="hol" checked> Gesetzliche Feiertage (Italien, Pfingstmontag) als frei zählen</label>
           <div class="row"><button class="btn pri" id="apply">Übernehmen</button><span class="m" id="applied"></span></div>
+          <div class="explain"><b>So wird Arbeit gezählt</b>
+            <ul>
+              <li>Eine Arbeitstour beginnt, wenn du an einem Arbeitstag von der Firma wegfährst – oder morgens direkt von daheim zur Baustelle.</li>
+              <li>Sie endet, sobald du wieder in der Firma oder daheim bist. Fahrten danach (abends, privat) zählen nicht.</li>
+              <li>Der Weg daheim ↔ Firma zählt nie. Mehrtägige Touren mit Hotel laufen durch bis zur Rückkehr.</li>
+              <li>Wochenenden, Feiertage und eingetragene freie Tage zählen nicht.</li>
+            </ul></div>
           <div><label>Gespeicherte Daten</label><div class="row"><button class="btn" id="forget">Datei aus diesem Browser löschen</button></div>
             <div class="m">Die Datei bleibt nur in diesem Browser gespeichert, damit du sie nicht jedes Mal neu laden musst.</div></div>
         </div>
@@ -228,7 +244,7 @@ function freeDays(text){
   }
   return out;
 }
-const opts=()=>({home:settings.home,work:settings.work,free:freeDays(settings.freeText)});
+const opts=()=>({home:settings.home,work:settings.work,free:freeDays(settings.freeText),holidays:settings.holidays!==false});
 function loadFile(file){$('#status').textContent='Datei wird gelesen …';worker.postMessage({cmd:'load',file,opts:opts()});saveFile(file)}
 function recompute(){if(R)worker.postMessage({cmd:'run',opts:opts()})}
 
@@ -428,7 +444,9 @@ $$('#tabs button').forEach(b=>b.onclick=()=>{$$('#tabs button').forEach(x=>x.cla
 segBind('#sitef','f',v=>{st.siteF=v;renderSites()});
 $$('[data-pick]').forEach(b=>b.onclick=()=>{st.pick=b.dataset.pick;$('#pickhint').style.display='block';card.scrollIntoView({behavior:'smooth',block:'center'})});
 $('#workAuto').onclick=()=>{settings.work=null;LS.set('zeitachse.settings',settings);recompute()};
-$('#apply').onclick=()=>{settings.freeText=$('#free').value;LS.set('zeitachse.settings',settings);$('#applied').textContent='Wird neu berechnet …';recompute()};
+$('#apply').onclick=()=>{settings.freeText=$('#free').value;settings.holidays=$('#hol').checked;LS.set('zeitachse.settings',settings);$('#applied').textContent='Wird neu berechnet …';recompute()};
+$('#gofree').onclick=e=>{e.preventDefault();$('#tabs [data-t=settings]').click();$('#free').focus();$('#free').scrollIntoView({behavior:'smooth',block:'center'})};
+function markFree(d){settings.freeText=((settings.freeText||'').trim()+'\n'+d).trim();LS.set('zeitachse.settings',settings);$('#free').value=settings.freeText;recompute()}
 $('#forget').onclick=async()=>{await forgetFile();$('#forget').textContent='Gelöscht'};
 
 /* ---------- Ergebnis anzeigen ---------- */
@@ -443,7 +461,8 @@ function onResult(){
   let c=0;cum=R.tl.map(t=>c+=t[2]);slider.max=R.tl.length-1;tl.i=Math.min(tl.i,R.tl.length-1);
   $('#cHome').textContent=R.home.map(v=>v.toFixed(4)).join(', ');
   $('#cWork').textContent=R.work?R.work.map(v=>v.toFixed(4)).join(', ')+(R.workAuto?' (automatisch erkannt)':''):'nicht erkannt';
-  $('#free').value=settings.freeText||'';
+  $('#free').value=settings.freeText||'';$('#hol').checked=settings.holidays!==false;
+  $('#freehint').classList.toggle('hidden',!!(settings.freeText||'').trim());
   const first=!W;resize();if(first)T=d3.zoomIdentity;renderTables();
 }
 function renderTables(){if(!R)return;renderSites();renderDiary();renderHotels();renderMonths();
@@ -457,10 +476,11 @@ function renderSites(){
 function renderDiary(){
   const by={};R.sites.forEach(s=>s.days.forEach(([d,h])=>(by[d]||=[]).push([placeName(s.lat,s.lon),h])));
   const hotel={};R.hotels.forEach(h=>h.work&&h.nights.forEach(n=>hotel[n]=placeName(h.lat,h.lon)));
-  const km={};R.tl.forEach(([d,,k])=>km[d]=k);
+  const km=R.stats.kmWorkDay||{};
   const mons={};Object.keys(by).sort().forEach(d=>(mons[d.slice(0,7)]||=[]).push(d));
   const hfmt=h=>h<1?Math.round(h*60)+' min':(Math.round(h*2)/2).toString().replace('.',',')+' h';
-  $('#diary').innerHTML=Object.keys(mons).sort().reverse().map((m,i)=>`<details${i===0?' open':''}><summary>${MON[+m.slice(5)-1]} ${m.slice(0,4)}<span>${mons[m].length} Tage</span></summary>${mons[m].map(d=>`<div class="drow"><span class="d">${fmtDay(d)}</span><div>${by[d].sort((a,b)=>b[1]-a[1]).map(([o,h])=>`<span class="pill">${o} · ${hfmt(h)}</span>`).join('')}${hotel[d]?`<span class="pill h">Hotel ${hotel[d]}</span>`:''}</div><span class="m">${nf.format(km[d]||0)} km</span></div>`).join('')}</details>`).join('')||'<p class="m">Noch keine Einträge.</p>';
+  $('#diary').innerHTML=Object.keys(mons).sort().reverse().map((m,i)=>`<details${i===0?' open':''}><summary>${MON[+m.slice(5)-1]} ${m.slice(0,4)}<span>${mons[m].length} Tage</span></summary>${mons[m].map(d=>`<div class="drow"><span class="d">${fmtDay(d)}</span><div>${by[d].sort((a,b)=>b[1]-a[1]).map(([o,h])=>`<span class="pill">${o} · ${hfmt(h)}</span>`).join('')}${hotel[d]?`<span class="pill h">Hotel ${hotel[d]}</span>`:''}</div><span class="m" style="text-align:right">${nf.format(km[d]||0)} km<br><button class="free-btn" data-free="${d}">war frei</button></span></div>`).join('')}</details>`).join('')||'<p class="m">Noch keine Einträge.</p>';
+  $$('#diary [data-free]').forEach(b=>b.onclick=e=>{e.preventDefault();b.textContent='…';markFree(b.dataset.free)});
 }
 function renderHotels(){
   const list=R.hotels.filter(h=>h.work);

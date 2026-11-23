@@ -20,11 +20,21 @@ unter *Einstellungen* kann man sie löschen.
 
 Die Datei (`Zeitachse.json` / `Timeline.json`) dann auf der Seite auswählen oder reinziehen.
 
+## Wie Arbeit gezählt wird
+
+- Eine **Arbeitstour** beginnt, wenn man an einem Arbeitstag von der Firma wegfährt –
+  oder morgens direkt von daheim zur Baustelle (bzw. am Vorabend weit weg ins Hotel).
+- Sie endet, sobald man wieder in der Firma oder daheim ist. Fahrten danach zählen nicht.
+- Der Weg daheim ↔ Firma zählt nie. Mehrtägige Touren mit Hotel laufen bis zur Rückkehr durch.
+- Wochenenden, gesetzliche Feiertage (Italien + Pfingstmontag) und eingetragene freie Tage zählen nicht.
+- **Einsatzorte** = Aufenthalte während einer Tour zwischen 6 und 20 Uhr, ab 3 Std insgesamt.
+- **Hotelnächte** = Nächte über 40 km von daheim mitten in einer Arbeitstour.
+
 ## Einstellungen
 
 - **Daheim** wird aus dem Export übernommen, **Firma** automatisch erkannt
   (häufigster Halt Mo–Fr morgens in der Nähe). Beides kann man auf der Karte neu setzen.
-- **Urlaub & freie Tage**: ein Tag oder Zeitraum pro Zeile, z. B.
+- **Urlaub & freie Tage**: ein Tag oder Zeitraum pro Zeile (oder im Tagebuch auf „war frei“ tippen), z. B.
   ```
   2025-12-24 bis 2026-01-06
   2026-08-15 bis 2026-08-22
