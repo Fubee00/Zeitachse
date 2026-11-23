@@ -205,7 +205,7 @@ footer{color:var(--mute);font-size:12px;margin:22px 2px 30px}
       <div class="pane" id="p-diary"><div id="diary"></div></div>
       <div class="pane" id="p-hotels">
         <div class="gbox" id="gbox">
-          <div class="row" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn pri" id="gfetch">Hotelnamen von Google holen</button><span class="m" id="gstatus"></span></div>
+          <div class="row" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn pri" id="gfetch">Hotelnamen von Google holen</button><button class="btn" id="kml">Für Google Earth (KML)</button><span class="m" id="gstatus"></span></div>
         </div>
         <p class="m" style="margin:10px 2px">„In Maps öffnen“ zeigt die genaue Unterkunft mit Namen. Trag dir Name, Sterne und eine Notiz ein – das bleibt gespeichert und taucht nächstes Jahr beim gleichen Hotel wieder auf.</p>
         <div id="tHotels"></div>
@@ -684,6 +684,29 @@ async function fetchHotelNames(){
   }catch(e){out.textContent='Fehler: '+(e.message||e)}
 }
 $('#gfetch').onclick=fetchHotelNames;
+/* Hotels als KML für Google Earth */
+function hotelsKml(){
+  const x=t=>String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'})[c]);
+  const list=R.hotels.filter(h=>h.work);
+  const pm=list.map(h=>{const n=notes[hkey(h)]||{},name=hDisplay(h)||placeName(h.lat,h.lon);
+    const desc=[`${h.work} ${h.work>1?'Nächte':'Nacht'} (Arbeit)`,n.stars?'Meine Bewertung: '+'★'.repeat(n.stars):'',n.grating?'Google: '+n.grating+' ★':'',n.gaddr||'',n.note?'Notiz: '+n.note:'','Daten: '+h.nights.map(fmtDayY).join(', '),`<a href="${n.guri||mapsUrl(h)}">In Google Maps öffnen</a>`].filter(Boolean).join('<br>');
+    return `  <Placemark><name>${x(name)}</name><styleUrl>#hotel${n.stars>=4?'Gut':n.stars&&n.stars<=2?'Schlecht':''}</styleUrl><description><![CDATA[${desc.replace(/]]>/g,"]] >")}]]></description><Point><coordinates>${h.lon},${h.lat},0</coordinates></Point></Placemark>`}).join('\n');
+  const style=(id,col)=>`  <Style id="${id}"><IconStyle><color>${col}</color><scale>1.1</scale><Icon><href>https://maps.google.com/mapfiles/kml/shapes/lodging.png</href></Icon></IconStyle></Style>`;
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2"><Document>
+  <name>Hotels Arbeit ${R.firstDay.slice(0,4)}${R.lastDay.slice(0,4)!==R.firstDay.slice(0,4)?'–'+R.lastDay.slice(0,4):''}</name>
+${style('hotel','ffde6f2f')}
+${style('hotelGut','ff3cb371')}
+${style('hotelSchlecht','ff3c3cdc')}
+${pm}
+</Document></kml>`;
+}
+$('#kml').onclick=()=>{
+  const blob=new Blob([hotelsKml()],{type:'application/vnd.google-earth.kml+xml'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='hotels-arbeit.kml';document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
+  $('#gstatus').textContent='hotels-arbeit.kml gespeichert – in Google Earth unter Projekte → Importieren öffnen.';
+};
 $('#gsave').onclick=()=>{LS.set(GK,$('#gkey').value.trim());$('#gsave').textContent='Gespeichert';setTimeout(()=>$('#gsave').textContent='Speichern',1500)};
 $('#gkey').value=LS.get(GK,'');
 function renderMonths(){
