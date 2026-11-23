@@ -103,6 +103,9 @@ footer{color:var(--mute);font-size:12px;margin:22px 2px 30px}
 .check{display:flex;gap:8px;align-items:center;font-weight:500}
 .explain{font-size:13px;color:var(--mute);background:var(--soft);border-radius:10px;padding:10px 12px}
 .explain ul{margin:6px 0 0;padding-left:18px}
+.attr{position:absolute;right:56px;bottom:66px;z-index:2;font-size:10px;color:#555;background:rgba(255,255,255,.8);padding:1px 6px;border-radius:4px}
+.attr a{color:inherit}
+.toast{position:absolute;left:50%;top:60px;transform:translateX(-50%);z-index:4;background:var(--txt);color:#fff;border-radius:10px;padding:8px 12px;font-size:12px;max-width:85%}
 .hidden{display:none!important}
 </style>
 </head>
@@ -145,6 +148,7 @@ footer{color:var(--mute);font-size:12px;margin:22px 2px 30px}
         <div class="seg" id="kind"><button data-k="all" class="on">Alle</button><button data-k="1">Arbeit</button><button data-k="0">Freizeit</button></div>
         <select class="sel" id="month"></select>
         <span class="spacer"></span>
+        <div class="seg" id="style"><button data-s="tiles" class="on">Karte</button><button data-s="simple">Einfach</button></div>
         <div class="seg" id="layers"><button data-l="sites">Einsatzorte</button><button data-l="hotels">Hotels</button></div>
       </div>
       <div class="zoomb"><button id="zin" aria-label="Hineinzoomen">+</button><button id="zout" aria-label="Herauszoomen">−</button><button id="zfit" aria-label="Alles zeigen" style="font-size:13px">⤢</button></div>
@@ -154,6 +158,7 @@ footer{color:var(--mute);font-size:12px;margin:22px 2px 30px}
         <input type="range" id="slider" min="0" value="0" aria-label="Tag">
         <button class="speed" id="speed">1×</button>
       </div>
+      <div class="attr" id="attr">© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>-Mitwirkende © <a href="https://carto.com/attributions">CARTO</a></div>
       <div class="pop" id="pop"></div>
       <div class="pickhint" id="pickhint">Tippe auf die Karte, um den Ort zu setzen</div>
     </div>
@@ -236,7 +241,7 @@ const DE={'San Lorenzo di Sebato':'St. Lorenzen','Laives':'Leifers','Campo Tures
 
 /* ---------- Zustand ---------- */
 let R=null, BASE=null, CITIES=null, GAZ=null, gazGrid=null;
-const st={kind:'all',month:'all',layers:{sites:false,hotels:false},pick:null,siteF:'all',tourF:'all'};
+const st={style:'tiles',tilesFailed:false,kind:'all',month:'all',layers:{sites:false,hotels:false},pick:null,siteF:'all',tourF:'all'};
 const tl={on:false,play:false,i:0,prog:1,speed:1};
 const LS={get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
 let settings=LS.get('zeitachse.settings',{home:null,work:null,freeText:''});
@@ -348,11 +353,46 @@ let heatTimer=0;
 function scheduleHeat(){clearTimeout(heatTimer);heatTimer=setTimeout(()=>{renderHeat();redraw()},140)}
 
 const pins=[];
+/* Detailkarte: Rasterkacheln (OpenStreetMap-Daten, Stil CARTO Voyager) */
+const tiles=new Map();let tileErr=0,tileRaf=0;
+function tileImg(z,x,y){
+  const k=z+'/'+x+'/'+y;let t=tiles.get(k);
+  if(!t){
+    if(tiles.size>600)tiles.clear();
+    const img=new Image();t={img,ok:false};tiles.set(k,t);
+    img.onload=()=>{t.ok=true;tileErr=0;if(!tileRaf)tileRaf=requestAnimationFrame(()=>{tileRaf=0;redraw()})};
+    img.onerror=()=>{if(++tileErr>6&&!st.tilesFailed){st.tilesFailed=true;setStyle('simple');toast('Die Detailkarte kann hier nicht geladen werden – auf GitHub Pages geht sie.')}};
+    img.src=`https://${'abcd'[(x+y)%4]}.basemaps.cartocdn.com/rastertiles/voyager/${z}/${x}/${y}${dpr>1?'@2x':''}.png`;
+  }
+  return t;
+}
+const lon2x=(lo,n)=>(lo+180)/360*n, lat2y=(la,n)=>(1-Math.log(Math.tan(la*Math.PI/180)+1/Math.cos(la*Math.PI/180))/Math.PI)/2*n;
+const x2lon=(x,n)=>x/n*360-180, y2lat=(y,n)=>Math.atan(Math.sinh(Math.PI*(1-2*y/n)))*180/Math.PI;
+function drawTiles(){
+  const worldPx=2*Math.PI*proj.scale()*T.k;const z=Math.max(2,Math.min(18,Math.round(Math.log2(worldPx/256))));const n=2**z;
+  const a=proj.invert([(0-T.x)/T.k,(0-T.y)/T.k]),b=proj.invert([(W-T.x)/T.k,(H-T.y)/T.k]);
+  const x0=Math.max(0,Math.floor(lon2x(a[0],n))),x1=Math.min(n-1,Math.floor(lon2x(b[0],n))),y0=Math.max(0,Math.floor(lat2y(a[1],n))),y1=Math.min(n-1,Math.floor(lat2y(b[1],n)));
+  if((x1-x0+1)*(y1-y0+1)>120)return;
+  for(let x=x0;x<=x1;x++)for(let y=y0;y<=y1;y++){
+    const p1=XY(y2lat(y,n),x2lon(x,n)),p2=XY(y2lat(y+1,n),x2lon(x+1,n));
+    const dx=Math.floor(p1[0]),dy=Math.floor(p1[1]),dw=Math.ceil(p2[0])-dx,dh=Math.ceil(p2[1])-dy;
+    const t=tileImg(z,x,y);
+    if(t.ok){ctx.drawImage(t.img,dx,dy,dw,dh);continue}
+    for(let d=1;d<=4&&z-d>=2;d++){ // gröbere Kachel als Platzhalter
+      const pt=tiles.get((z-d)+'/'+(x>>d)+'/'+(y>>d));if(!pt||!pt.ok)continue;
+      const sub=2**d,sw=pt.img.naturalWidth/sub;ctx.drawImage(pt.img,(x%sub)*sw,(y%sub)*sw,sw,sw,dx,dy,dw,dh);break}
+  }
+}
+function toast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;card.appendChild(t);setTimeout(()=>t.remove(),5000)}
+function setStyle(v){st.style=v;$$('#style button').forEach(b=>b.classList.toggle('on',b.dataset.s===v));$('#attr').classList.toggle('hidden',v!=='tiles');redraw()}
+
 function redraw(){
   if(!W)return;
   ctx.setTransform(dpr,0,0,dpr,0,0);
-  ctx.fillStyle='#b9d9f3';ctx.fillRect(0,0,W,H);
-  if(P){
+  const useTiles=st.style==='tiles'&&!st.tilesFailed;
+  ctx.fillStyle=useTiles?'#e8eef2':'#b9d9f3';ctx.fillRect(0,0,W,H);
+  if(useTiles)drawTiles();
+  else if(P){
     ctx.save();ctx.translate(T.x,T.y);ctx.scale(T.k,T.k);
     const k=T.k,lw=px=>px/k*Math.min(1.8,.8+k*.08);
     ctx.fillStyle='#f4f2ee';ctx.fill(P.land);
@@ -369,16 +409,17 @@ function redraw(){
     if(!heatCache)renderHeat();
     const s=T.k/heatCache.k;
     ctx.setTransform(1,0,0,1,0,0);
-    ctx.globalAlpha=tl.on?.3:1;
+    ctx.globalAlpha=tl.on?.3:(useTiles?.75:1);
     ctx.drawImage(heatC,(T.x-heatCache.x*s)*dpr,(T.y-heatCache.y*s)*dpr,heatC.width*s,heatC.height*s);
     ctx.globalAlpha=1;
   }
   ctx.setTransform(dpr,0,0,dpr,0,0);
-  drawLabels();drawPins();
+  drawLabels(useTiles);drawPins();
 }
 const XY=(la,lo)=>{const p=proj([lo,la]);return [p[0]*T.k+T.x,p[1]*T.k+T.y]};
-function drawLabels(){
+function drawLabels(tilesOn){
   if(!CITIES)return;
+  if(!tilesOn){
   const maxRank=T.k<1.5?4:T.k<3?6:T.k<6?8:10;const boxes=[];
   ctx.font='500 11px Inter,sans-serif';ctx.textBaseline='middle';
   for(const [la,lo,n,r] of CITIES){
@@ -387,6 +428,7 @@ function drawLabels(){
     if(boxes.some(o=>!(b[2]<o[0]||b[0]>o[2]||b[3]<o[1]||b[1]>o[3])))continue;boxes.push(b);
     ctx.fillStyle='#6b7280';ctx.beginPath();ctx.arc(x,y,2,0,7);ctx.fill();
     ctx.lineWidth=3;ctx.strokeStyle='rgba(255,255,255,.9)';ctx.strokeText(n,x+7,y);ctx.fillStyle='#374151';ctx.fillText(n,x+7,y);
+  }
   }
   if(R){const [x,y]=XY(R.home[0],R.home[1]);ctx.fillStyle='#1d2433';ctx.beginPath();ctx.arc(x,y,5,0,7);ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();
     ctx.font='600 11px Inter,sans-serif';ctx.lineWidth=3;ctx.strokeStyle='#fff';ctx.strokeText('Daheim',x+9,y-1);ctx.fillStyle='#1d2433';ctx.fillText('Daheim',x+9,y-1)}
@@ -451,6 +493,7 @@ const SPEEDS=[1,3,8];$('#speed').onclick=e=>{tl.speed=SPEEDS[(SPEEDS.indexOf(tl.
 
 /* ---------- Bedienelemente ---------- */
 function segBind(sel,attr,cb){$$(sel+' button').forEach(b=>b.onclick=()=>{$$(sel+' button').forEach(x=>x.classList.remove('on'));b.classList.add('on');cb(b.dataset[attr])})}
+segBind('#style','s',v=>setStyle(v));
 segBind('#kind','k',v=>{st.kind=v;renderHeat();redraw()});
 $('#month').onchange=e=>{st.month=e.target.value;renderHeat();redraw()};
 $$('#layers button').forEach(b=>b.onclick=()=>{const l=b.dataset.l;st.layers[l]=!st.layers[l];b.classList.toggle('on',st.layers[l]);$('#pop').style.display='none';redraw()});

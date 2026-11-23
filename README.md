@@ -63,4 +63,6 @@ Lokal testen: `python3 -m http.server` im Ordner und `http://localhost:8000` öf
 | `data/staedte.json` | Städtenamen für die Karte (Natural Earth) |
 | `data/orte.json` | Ortsnamen für Einsatzorte (GeoNames, CC BY 4.0) |
 
+Die Detailkarte („Karte“) lädt Kacheln von CARTO (Daten © OpenStreetMap-Mitwirkende). Ohne Internet oder wo das blockiert ist, wird automatisch die einfache Karte genommen.
+
 Kilometer sind Googles Schätzung – kein Ersatz für ein Fahrtenbuch.
