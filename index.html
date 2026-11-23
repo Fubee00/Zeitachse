@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zeitachse – Fahrten & Einsatzorte</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f7f9;--card:#fff;--line:#e4e7ec;--txt:#1d2433;--mute:#667085;--soft:#f1f3f6;
+  --acc:#e4572e;--acc2:#f4a259;--blue:#2f6fde;
+  --r:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.45 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+button,select,input,textarea{font:inherit;color:inherit}
+.wrap{max-width:1100px;margin:0 auto;padding:16px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:4px 0 14px}
+h1{font-size:20px;margin:0;font-weight:700;letter-spacing:-.01em}
+.sub{color:var(--mute);font-size:13px}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 12px;cursor:pointer;font-weight:500}
+.btn:hover{background:var(--soft)}
+.btn.pri{background:var(--txt);color:#fff;border-color:var(--txt)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r)}
+/* Start */
+#start{padding:28px;text-align:center}
+#drop{border:1.5px dashed #c8cdd6;border-radius:12px;padding:34px 16px;margin:18px auto 0;max-width:520px;cursor:pointer;transition:.15s}
+#drop.over{border-color:var(--acc);background:#fff6f2}
+#drop b{display:block;font-size:16px;margin-bottom:4px}
+.steps{max-width:520px;margin:22px auto 0;text-align:left;color:var(--mute);font-size:13px}
+.steps ol{padding-left:18px;margin:6px 0}
+.note{font-size:12px;color:var(--mute);margin-top:14px}
+#status{margin-top:14px;font-weight:500;min-height:20px}
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+.stat{padding:12px 14px}
+.stat .v{font-size:22px;font-weight:700;letter-spacing:-.02em}
+.stat .l{font-size:12px;color:var(--mute)}
+@media(max-width:640px){.stats{grid-template-columns:repeat(2,1fr)}.stat .v{font-size:19px}}
+/* Map */
+#mapcard{position:relative;overflow:hidden;height:min(68vh,640px);min-height:420px}
+#mapcard canvas{position:absolute;inset:0;width:100%;height:100%}
+#base{touch-action:none;cursor:grab}
+#over{pointer-events:none}
+.tb{position:absolute;display:flex;gap:6px;z-index:2;flex-wrap:wrap}
+.tb.tl{left:10px;top:10px;right:10px}
+.seg{display:inline-flex;background:rgba(255,255,255,.95);border:1px solid var(--line);border-radius:10px;padding:2px;box-shadow:0 1px 3px rgba(16,24,40,.08)}
+.seg button{border:0;background:none;padding:6px 10px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;color:var(--mute)}
+.seg button.on{background:var(--txt);color:#fff}
+.sel{background:rgba(255,255,255,.95);border:1px solid var(--line);border-radius:10px;padding:6px 8px;font-size:13px;box-shadow:0 1px 3px rgba(16,24,40,.08)}
+.spacer{flex:1}
+.zoomb{position:absolute;right:10px;bottom:84px;display:flex;flex-direction:column;z-index:2;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(16,24,40,.08)}
+.zoomb button{border:0;background:none;width:36px;height:34px;font-size:18px;cursor:pointer}
+.zoomb button+button{border-top:1px solid var(--line)}
+.player{position:absolute;left:10px;right:10px;bottom:10px;z-index:2;background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:12px;padding:8px 12px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(16,24,40,.1)}
+.play{width:36px;height:36px;border-radius:50%;border:0;background:var(--txt);color:#fff;cursor:pointer;flex:none;display:grid;place-items:center}
+.play svg{width:14px;height:14px}
+.pinfo{min-width:120px;flex:none}
+.pinfo b{display:block;font-size:13px}.pinfo span{font-size:12px;color:var(--mute)}
+.player input{flex:1;accent-color:var(--acc)}
+.speed{border:1px solid var(--line);background:#fff;border-radius:8px;padding:4px 8px;font-size:12px;cursor:pointer;flex:none}
+@media(max-width:560px){.pinfo{min-width:96px}.speed{display:none}}
+.pop{position:absolute;z-index:3;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13px;box-shadow:0 6px 20px rgba(16,24,40,.15);display:none;max-width:260px;pointer-events:none}
+.pop b{display:block}.pop span{color:var(--mute);font-size:12px}
+.pickhint{position:absolute;left:50%;top:56px;transform:translateX(-50%);z-index:3;background:var(--txt);color:#fff;border-radius:10px;padding:8px 12px;font-size:13px;display:none}
+.legend{display:flex;gap:16px;align-items:center;flex-wrap:wrap;color:var(--mute);font-size:12px;margin:10px 2px 16px}
+.legend i{display:inline-block;vertical-align:middle;margin-right:6px}
+.grad{width:90px;height:8px;border-radius:4px;background:linear-gradient(90deg,#f6c3a8,#f4a259,#e4572e,#8f1d3a)}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--acc);border:2px solid #fff;box-shadow:0 0 0 1px var(--acc)}
+.sq{width:10px;height:10px;border-radius:3px;background:var(--blue)}
+/* Tabs */
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:0;overflow-x:auto}
+.tabs button{border:0;background:none;padding:10px 12px;cursor:pointer;font-weight:500;color:var(--mute);border-bottom:2px solid transparent;white-space:nowrap}
+.tabs button.on{color:var(--txt);border-color:var(--txt)}
+.pane{display:none;padding:6px 0 0}.pane.on{display:block}
+table{width:100%;border-collapse:collapse}
+td,th{padding:10px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:12px;color:var(--mute);font-weight:500}
+td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+tr.click{cursor:pointer}tr.click:hover td{background:var(--soft)}
+.rk{width:28px;color:var(--mute);font-variant-numeric:tabular-nums}
+.meter{height:4px;background:var(--soft);border-radius:2px;margin-top:6px}
+.meter div{height:100%;background:var(--acc);border-radius:2px}
+.m{color:var(--mute);font-size:12px}
+details{border-bottom:1px solid var(--line)}
+summary{list-style:none;padding:12px 8px;cursor:pointer;display:flex;justify-content:space-between;font-weight:600}
+summary::-webkit-details-marker{display:none}
+summary span{font-weight:400;color:var(--mute);font-size:13px}
+.drow{display:grid;grid-template-columns:70px 1fr auto;gap:10px;padding:8px;border-top:1px solid var(--soft);font-size:13px}
+.drow .d{color:var(--mute);font-variant-numeric:tabular-nums}
+.pill{display:inline-block;padding:1px 8px;border-radius:999px;background:var(--soft);margin:2px 4px 2px 0;font-size:12px}
+.pill.h{background:#eaf1fd;color:#1f4fa8}
+.form{display:grid;gap:16px;max-width:620px;padding:8px}
+.form label{font-weight:600;display:block;margin-bottom:4px}
+.form .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.form textarea{width:100%;min-height:110px;border:1px solid var(--line);border-radius:10px;padding:10px;font-family:ui-monospace,Menlo,monospace;font-size:13px}
+.coord{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--mute)}
+footer{color:var(--mute);font-size:12px;margin:22px 2px 30px}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div><h1>Zeitachse</h1><div class="sub" id="range">Fahrten, Einsatzorte und Übernachtungen aus Google Maps</div></div>
+    <button class="btn hidden" id="newfile">Andere Datei</button>
+  </header>
+
+  <section class="card" id="start">
+    <div style="font-size:16px;font-weight:600">Zeitachsen-Export hier reinziehen</div>
+    <div class="sub">Die Datei wird nur in deinem Browser ausgewertet und nirgends hochgeladen.</div>
+    <div id="drop"><b>Datei auswählen</b><span class="sub">Zeitachse.json bzw. Timeline.json</span></div>
+    <input type="file" id="file" accept=".json,application/json" hidden>
+    <div id="status"></div>
+    <div class="steps">
+      <b>So kommst du zur Datei (Android):</b>
+      <ol>
+        <li>Einstellungen → Standort → Standortdienste → Zeitachse</li>
+        <li>„Zeitachsendaten exportieren“ antippen</li>
+        <li>Datei speichern und hier auswählen</li>
+      </ol>
+      <b>iPhone:</b> Google Maps → Profilbild → Einstellungen → Persönliche Inhalte → Zeitachsendaten exportieren.
+    </div>
+  </section>
+
+  <main id="app" class="hidden">
+    <div class="stats">
+      <div class="card stat"><div class="v" id="sKm">–</div><div class="l">km mit dem Auto</div></div>
+      <div class="card stat"><div class="v" id="sWork">–</div><div class="l">km Arbeit (Mo–Fr ab Firma)</div></div>
+      <div class="card stat"><div class="v" id="sNights">–</div><div class="l">Hotelnächte Arbeit</div></div>
+      <div class="card stat"><div class="v" id="sRec">–</div><div class="l" id="sRecL">Rekordtag</div></div>
+    </div>
+
+    <div class="card" id="mapcard">
+      <canvas id="base"></canvas><canvas id="over"></canvas>
+      <div class="tb tl">
+        <div class="seg" id="kind"><button data-k="all" class="on">Alle</button><button data-k="1">Arbeit</button><button data-k="0">Freizeit</button></div>
+        <select class="sel" id="month"></select>
+        <span class="spacer"></span>
+        <div class="seg" id="layers"><button data-l="sites">Einsatzorte</button><button data-l="hotels">Hotels</button></div>
+      </div>
+      <div class="zoomb"><button id="zin" aria-label="Hineinzoomen">+</button><button id="zout" aria-label="Herauszoomen">−</button><button id="zfit" aria-label="Alles zeigen" style="font-size:13px">⤢</button></div>
+      <div class="player">
+        <button class="play" id="play" aria-label="Abspielen"><svg viewBox="0 0 14 14"><path id="pic" d="M3 1.5v11l9-5.5z" fill="currentColor"/></svg></button>
+        <div class="pinfo"><b id="pd">Zeitleiste</b><span id="pk">Tag für Tag abspielen</span></div>
+        <input type="range" id="slider" min="0" value="0" aria-label="Tag">
+        <button class="speed" id="speed">1×</button>
+      </div>
+      <div class="pop" id="pop"></div>
+      <div class="pickhint" id="pickhint">Tippe auf die Karte, um den Ort zu setzen</div>
+    </div>
+    <div class="legend">
+      <span><i class="grad"></i>Aufenthalt: selten → oft</span>
+      <span><i class="dot"></i>Einsatzort</span>
+      <span><i class="sq"></i>Hotel (Arbeit)</span>
+    </div>
+
+    <div class="card" style="padding:4px 12px 10px">
+      <div class="tabs" id="tabs">
+        <button data-t="sites" class="on">Einsatzorte</button>
+        <button data-t="diary">Tagebuch</button>
+        <button data-t="hotels">Hotels</button>
+        <button data-t="months">Monate</button>
+        <button data-t="settings">Einstellungen</button>
+      </div>
+      <div class="pane on" id="p-sites">
+        <div class="row" style="display:flex;gap:8px;margin:10px 0 2px"><div class="seg" id="sitef"><button data-f="all" class="on">Alle</button><button data-f="far">Über 50 km</button></div></div>
+        <table><thead><tr><th class="rk">#</th><th>Ort</th><th class="num">Stunden</th><th class="num">Tage</th></tr></thead><tbody id="tSites"></tbody></table>
+      </div>
+      <div class="pane" id="p-diary"><div id="diary"></div></div>
+      <div class="pane" id="p-hotels">
+        <table><thead><tr><th>Ort</th><th>Nächte</th><th class="num">Anzahl</th></tr></thead><tbody id="tHotels"></tbody></table>
+      </div>
+      <div class="pane" id="p-months">
+        <table><thead><tr><th>Monat</th><th class="num">Auto gesamt</th><th class="num">davon Arbeit</th></tr></thead><tbody id="tMonths"></tbody></table>
+      </div>
+      <div class="pane" id="p-settings">
+        <div class="form">
+          <div><label>Daheim</label><div class="row"><span class="coord" id="cHome"></span><button class="btn" data-pick="home">Auf Karte wählen</button></div></div>
+          <div><label>Firma</label><div class="row"><span class="coord" id="cWork"></span><button class="btn" data-pick="work">Auf Karte wählen</button><button class="btn" id="workAuto">Automatisch</button></div>
+            <div class="m">Fahrten zwischen daheim und Firma zählen nicht als Arbeits-km.</div></div>
+          <div><label for="free">Urlaub &amp; freie Tage</label>
+            <textarea id="free" placeholder="2025-12-24 bis 2026-01-06&#10;2026-08-15 bis 2026-08-22&#10;2026-06-26"></textarea>
+            <div class="m">Ein Tag oder Zeitraum pro Zeile. Diese Tage zählen nicht als Arbeit.</div></div>
+          <div class="row"><button class="btn pri" id="apply">Übernehmen</button><span class="m" id="applied"></span></div>
+          <div><label>Gespeicherte Daten</label><div class="row"><button class="btn" id="forget">Datei aus diesem Browser löschen</button></div>
+            <div class="m">Die Datei bleibt nur in diesem Browser gespeichert, damit du sie nicht jedes Mal neu laden musst.</div></div>
+        </div>
+      </div>
+    </div>
+    <footer>Basiskarte: Natural Earth. Ortsnamen: GeoNames (nächster Ort zu den Koordinaten). Kilometer laut Google-Schätzung – kein Ersatz für ein Fahrtenbuch.</footer>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script>
+"use strict";
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const MON=['Jänner','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+const WD=['So','Mo','Di','Mi','Do','Fr','Sa'];
+const nf=new Intl.NumberFormat('de-DE',{maximumFractionDigits:0});
+const fmtDay=d=>WD[new Date(d+'T12:00Z').getUTCDay()]+' '+d.slice(8,10)+'.'+d.slice(5,7)+'.';
+const fmtDayY=d=>fmtDay(d)+d.slice(2,4);
+// Südtiroler Ortsnamen auf Deutsch
+const DE={'San Lorenzo di Sebato':'St. Lorenzen','Laives':'Leifers','Campo Tures':'Sand in Taufers','Perca':'Percha','Valdaora di Mezzo':'Mitterolang','Valdaora':'Olang','Laces':'Latsch','Prato Allo Stelvio':'Prad','Silandro':'Schlanders','San Giacomo':'St. Jakob','Brunico':'Bruneck','Bolzano':'Bozen','Bressanone':'Brixen','Merano':'Meran','Vipiteno':'Sterzing','Chiusa':'Klausen','Varna':'Vahrn','Chienes':'Kiens','Rasun Anterselva':'Rasen-Antholz','Falzes':'Pfalzen','Villabassa':'Niederdorf','Dobbiaco':'Toblach','San Candido':'Innichen','Monguelfo':'Welsberg','Rio di Pusteria':'Mühlbach','Vandoies':'Vintl','Terento':'Terenten','Appiano sulla Strada del Vino':'Eppan','Caldaro sulla Strada del Vino':'Kaltern','Egna':'Neumarkt','Ora':'Auer','Bronzolo':'Branzoll','Malles Venosta':'Mals','Naturno':'Naturns','Lasa':'Laas','Sarentino':'Sarnthein','Renon':'Ritten','Ortisei':'St. Ulrich','Selva di Val Gardena':'Wolkenstein','Badia':'Abtei','Marebbe':'Enneberg','Valle Aurina':'Ahrntal','Gais':'Gais','Lana':'Lana','Postal':'Burgstall','Gargazzone':'Gargazon','Terlano':'Terlan','Nalles':'Nals','Andriano':'Andrian','Salorno':'Salurn','Cortaccia sulla Strada del Vino':'Kurtatsch','Termeno sulla Strada del Vino':'Tramin','Vadena':'Pfatten','Fiè allo Sciliar':'Völs am Schlern','Castelrotto':'Kastelruth','Ponte Gardena':'Waidbruck','Funes':'Villnöss','Luson':'Lüsen','Rodengo':'Rodeneck','Campo di Trens':'Freienfeld','Racines':'Ratschings','Val di Vizze':'Pfitsch','Brennero':'Brenner','Fortezza':'Franzensfeste','Naz-Sciaves':'Natz-Schabs','Velturno':'Feldthurns','Barbiano':'Barbian','Villandro':'Villanders','Lagundo':'Algund','Tirolo':'Dorf Tirol','Scena':'Schenna','Marlengo':'Marling','Cermes':'Tscherms','Parcines':'Partschins','Senales':'Schnals','Ciardes':'Tschars','Castelbello-Ciardes':'Kastelbell-Tschars','Sluderno':'Schluderns','Glorenza':'Glurns','Curon Venosta':'Graun','Valdurna':'Durnholz','La Valle':'Wengen','Corvara in Badia':'Corvara','San Martino in Badia':'St. Martin in Thurn','Braies':'Prags','Sesto':'Sexten','Valle di Casies':'Gsies','Predoi':'Prettau','Selva dei Molini':'Mühlwald'};
+
+/* ---------- Zustand ---------- */
+let R=null, BASE=null, CITIES=null, GAZ=null, gazGrid=null;
+const st={kind:'all',month:'all',layers:{sites:false,hotels:false},pick:null,siteF:'all'};
+const tl={on:false,play:false,i:0,prog:1,speed:1};
+const LS={get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
+let settings=LS.get('zeitachse.settings',{home:null,work:null,freeText:''});
+
+/* ---------- Worker ---------- */
+const worker=new Worker('worker.js');
+worker.onmessage=e=>{
+  const m=e.data;
+  if(m.status){$('#status').textContent=m.status;return}
+  if(m.error){$('#status').textContent='Das hat nicht geklappt: '+m.error+'. Ist das wirklich der Zeitachsen-Export?';return}
+  if(m.result){R=m.result;onResult()}
+};
+function freeDays(text){
+  const out=[];
+  for(const line of (text||'').split(/\n/)){
+    const d=line.match(/\d{4}-\d{2}-\d{2}/g); if(!d)continue;
+    let a=d[0],b=d[1]||d[0]; if(b<a)[a,b]=[b,a];
+    let x=new Date(a+'T12:00Z');while(x.toISOString().slice(0,10)<=b){out.push(x.toISOString().slice(0,10));x.setUTCDate(x.getUTCDate()+1)}
+  }
+  return out;
+}
+const opts=()=>({home:settings.home,work:settings.work,free:freeDays(settings.freeText)});
+function loadFile(file){$('#status').textContent='Datei wird gelesen …';worker.postMessage({cmd:'load',file,opts:opts()});saveFile(file)}
+function recompute(){if(R)worker.postMessage({cmd:'run',opts:opts()})}
+
+/* Datei im Browser merken (IndexedDB) */
+function idb(){return new Promise((res,rej)=>{const r=indexedDB.open('zeitachse',1);r.onupgradeneeded=()=>r.result.createObjectStore('f');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+async function saveFile(f){try{const db=await idb();db.transaction('f','readwrite').objectStore('f').put(f,'raw')}catch{}}
+async function readFile(){try{const db=await idb();return await new Promise(res=>{const q=db.transaction('f').objectStore('f').get('raw');q.onsuccess=()=>res(q.result);q.onerror=()=>res(null)})}catch{return null}}
+async function forgetFile(){try{const db=await idb();db.transaction('f','readwrite').objectStore('f').delete('raw')}catch{}}
+
+/* ---------- Start ---------- */
+const drop=$('#drop'),fi=$('#file');
+drop.onclick=()=>fi.click();
+fi.onchange=()=>fi.files[0]&&loadFile(fi.files[0]);
+['dragenter','dragover'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add('over')}));
+['dragleave','drop'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.remove('over')}));
+drop.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f)loadFile(f)});
+$('#newfile').onclick=()=>{$('#app').classList.add('hidden');$('#start').classList.remove('hidden');$('#newfile').classList.add('hidden');$('#status').textContent=''};
+readFile().then(f=>{if(f){$('#status').textContent='Gespeicherte Datei wird geladen …';worker.postMessage({cmd:'load',file:f,opts:opts()})}});
+
+/* ---------- Basisdaten ---------- */
+Promise.all([fetch('data/laender.json').then(r=>r.json()),fetch('data/strassen.json').then(r=>r.json()),fetch('data/staedte.json').then(r=>r.json())])
+  .then(([l,s,c])=>{BASE={land:l,...s};CITIES=c;buildPaths();redraw()});
+fetch('data/orte.json').then(r=>r.json()).then(g=>{GAZ=g;gazGrid=new Map();for(const x of g){const k=Math.floor(x[0]*10)+','+Math.floor(x[1]*10);(gazGrid.get(k)||gazGrid.set(k,[]).get(k)).push(x)}if(R)renderTables()});
+function placeName(la,lo){
+  if(!gazGrid)return la.toFixed(3)+', '+lo.toFixed(3);
+  let best=null,bd=1e9;const a=Math.floor(la*10),b=Math.floor(lo*10);
+  for(let i=-2;i<=2;i++)for(let j=-2;j<=2;j++)for(const x of gazGrid.get((a+i)+','+(b+j))||[]){const d=(x[0]-la)**2+((x[1]-lo)*Math.cos(la*Math.PI/180))**2;if(d<bd){bd=d;best=x}}
+  if(!best)return la.toFixed(3)+', '+lo.toFixed(3);
+  const n=DE[best[2]]||best[2];return best[3]==='IT'?n:n+' ('+best[3]+')';
+}
+
+/* ---------- Karte ---------- */
+const card=$('#mapcard'),cv=$('#base'),ov=$('#over'),ctx=cv.getContext('2d'),octx=ov.getContext('2d');
+const proj=d3.geoMercator();let W=0,H=0,dpr=1,T=d3.zoomIdentity;
+let P=null; // Path2D in Projektions-Koordinaten
+function buildPaths(){
+  if(!BASE||!W)return;
+  const path=d3.geoPath(proj);const mk=g=>new Path2D(path(g)||'');
+  const lines=a=>mk({type:'MultiLineString',coordinates:a});
+  P={land:mk(BASE.land),lakes:mk({type:'MultiPolygon',coordinates:BASE.lakes}),m:lines(BASE.roads.m),p:lines(BASE.roads.p),s:lines(BASE.roads.s)};
+}
+function fit(){
+  let la=[],lo=[];
+  if(R){const h=R.heat;for(let i=0;i<h.length;i+=5){la.push(h[i]);lo.push(h[i+1])}}
+  if(la.length<5){la=[44,48];lo=[8,16]}
+  la.sort((a,b)=>a-b);lo.sort((a,b)=>a-b);
+  const q=(a,p)=>a[Math.min(a.length-1,Math.floor(a.length*p))];
+  const b=[[q(lo,.005)-.3,q(la,.005)-.2],[q(lo,.995)+.3,q(la,.995)+.2]];
+  proj.fitExtent([[24,64],[W-24,H-80]],{type:'MultiPoint',coordinates:b});
+}
+function resize(){
+  dpr=Math.min(2,window.devicePixelRatio||1);W=card.clientWidth;H=card.clientHeight;
+  for(const c of [cv,ov]){c.width=W*dpr;c.height=H*dpr}
+  fit();buildPaths();heatCache=null;redraw();drawOver();
+}
+new ResizeObserver(()=>{if(!$('#app').classList.contains('hidden'))resize()}).observe(card);
+
+/* Heatmap: einmal pro Zoomstufe berechnen, beim Ziehen nur verschieben */
+const heatC=document.createElement('canvas'),hctx=heatC.getContext('2d',{willReadFrequently:true});
+let heatCache=null; // {T}
+const PAL=(()=>{const c=document.createElement('canvas');c.width=256;c.height=1;const x=c.getContext('2d');const g=x.createLinearGradient(0,0,256,0);
+  [[0,'rgba(246,195,168,0)'],[.12,'rgba(246,195,168,.7)'],[.35,'#f4a259'],[.6,'#e4572e'],[.85,'#b02e3a'],[1,'#6e1630']].forEach(([o,c])=>g.addColorStop(o,c));x.fillStyle=g;x.fillRect(0,0,256,1);return x.getImageData(0,0,256,1).data})();
+function renderHeat(){
+  heatC.width=cv.width;heatC.height=cv.height;
+  hctx.clearRect(0,0,heatC.width,heatC.height);
+  if(!R)return;
+  const h=R.heat,agg=new Map(),mo=st.month==='all'?-1:+st.month,kd=st.kind==='all'?-1:+st.kind;
+  for(let i=0;i<h.length;i+=5){if(mo>=0&&h[i+2]!==mo)continue;if(kd>=0&&h[i+3]!==kd)continue;const k=h[i]*1e4+h[i+1];const e=agg.get(k);if(e)e[2]+=h[i+4];else agg.set(k,[h[i],h[i+1],h[i+4]])}
+  let max=1;for(const v of agg.values())if(v[2]>max)max=v[2];const lm=Math.log1p(max);
+  const r=Math.max(5,Math.min(30,6*Math.sqrt(T.k)))*dpr;
+  // vorgefertigter Stempel statt Gradient pro Punkt
+  const stamp=document.createElement('canvas');stamp.width=stamp.height=Math.ceil(r*2);const sc=stamp.getContext('2d');const g=sc.createRadialGradient(r,r,0,r,r,r);g.addColorStop(0,'rgba(0,0,0,1)');g.addColorStop(1,'rgba(0,0,0,0)');sc.fillStyle=g;sc.fillRect(0,0,2*r,2*r);
+  for(const [la,lo,v] of agg.values()){
+    const p=proj([lo,la]);const x=(p[0]*T.k+T.x)*dpr,y=(p[1]*T.k+T.y)*dpr;
+    if(x<-r||y<-r||x>heatC.width+r||y>heatC.height+r)continue;
+    hctx.globalAlpha=Math.max(.05,Math.log1p(v)/lm);hctx.drawImage(stamp,x-r,y-r);
+  }
+  hctx.globalAlpha=1;
+  const img=hctx.getImageData(0,0,heatC.width,heatC.height),px=img.data;
+  for(let i=3;i<px.length;i+=4){const a=px[i];if(!a)continue;const j=Math.min(255,a*1.2|0)*4;px[i-3]=PAL[j];px[i-2]=PAL[j+1];px[i-1]=PAL[j+2];px[i]=Math.min(235,PAL[j+3]*.9+a*.3)}
+  hctx.putImageData(img,0,0);
+  heatCache={k:T.k,x:T.x,y:T.y};
+}
+let heatTimer=0;
+function scheduleHeat(){clearTimeout(heatTimer);heatTimer=setTimeout(()=>{renderHeat();redraw()},140)}
+
+const pins=[];
+function redraw(){
+  if(!W)return;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.fillStyle='#b9d9f3';ctx.fillRect(0,0,W,H);
+  if(P){
+    ctx.save();ctx.translate(T.x,T.y);ctx.scale(T.k,T.k);
+    const k=T.k,lw=px=>px/k*Math.min(1.8,.8+k*.08);
+    ctx.fillStyle='#f4f2ee';ctx.fill(P.land);
+    ctx.fillStyle='#b9d9f3';ctx.fill(P.lakes,'evenodd');
+    ctx.lineWidth=1/k;ctx.strokeStyle='#c9c3d6';ctx.setLineDash([3/k,2.5/k]);ctx.stroke(P.land);ctx.setLineDash([]);
+    ctx.lineJoin=ctx.lineCap='round';
+    if(k>1.6){ctx.strokeStyle='#e3dfd6';ctx.lineWidth=lw(1.6);ctx.stroke(P.s);ctx.strokeStyle='#fff';ctx.lineWidth=lw(.9);ctx.stroke(P.s)}
+    ctx.strokeStyle='#e8dcc4';ctx.lineWidth=lw(2.4);ctx.stroke(P.p);ctx.strokeStyle='#fdf6e3';ctx.lineWidth=lw(1.4);ctx.stroke(P.p);
+    ctx.strokeStyle='#e9c79b';ctx.lineWidth=lw(2.8);ctx.stroke(P.m);ctx.strokeStyle='#fbe3bf';ctx.lineWidth=lw(1.7);ctx.stroke(P.m);
+    ctx.restore();
+  }
+  // Heatmap (gecacht, beim Zoomen nur skaliert)
+  if(R){
+    if(!heatCache)renderHeat();
+    const s=T.k/heatCache.k;
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.globalAlpha=tl.on?.3:1;
+    ctx.drawImage(heatC,(T.x-heatCache.x*s)*dpr,(T.y-heatCache.y*s)*dpr,heatC.width*s,heatC.height*s);
+    ctx.globalAlpha=1;
+  }
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  drawLabels();drawPins();
+}
+const XY=(la,lo)=>{const p=proj([lo,la]);return [p[0]*T.k+T.x,p[1]*T.k+T.y]};
+function drawLabels(){
+  if(!CITIES)return;
+  const maxRank=T.k<1.5?4:T.k<3?6:T.k<6?8:10;const boxes=[];
+  ctx.font='500 11px Inter,sans-serif';ctx.textBaseline='middle';
+  for(const [la,lo,n,r] of CITIES){
+    if(r>maxRank)continue;const [x,y]=XY(la,lo);if(x<0||y<0||x>W||y>H)continue;
+    const w=ctx.measureText(n).width,b=[x+5,y-7,x+9+w,y+7];
+    if(boxes.some(o=>!(b[2]<o[0]||b[0]>o[2]||b[3]<o[1]||b[1]>o[3])))continue;boxes.push(b);
+    ctx.fillStyle='#6b7280';ctx.beginPath();ctx.arc(x,y,2,0,7);ctx.fill();
+    ctx.lineWidth=3;ctx.strokeStyle='rgba(255,255,255,.9)';ctx.strokeText(n,x+7,y);ctx.fillStyle='#374151';ctx.fillText(n,x+7,y);
+  }
+  if(R){const [x,y]=XY(R.home[0],R.home[1]);ctx.fillStyle='#1d2433';ctx.beginPath();ctx.arc(x,y,5,0,7);ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();
+    ctx.font='600 11px Inter,sans-serif';ctx.lineWidth=3;ctx.strokeStyle='#fff';ctx.strokeText('Daheim',x+9,y-1);ctx.fillStyle='#1d2433';ctx.fillText('Daheim',x+9,y-1)}
+  ctx.textBaseline='alphabetic';
+}
+function drawPins(){
+  pins.length=0;if(!R)return;const sz=Math.min(1,.6+.1*T.k);
+  if(st.layers.hotels)for(const h of R.hotels){if(!h.work)continue;const [x,y]=XY(h.lat,h.lon);if(x<-10||y<-10||x>W+10||y>H+10)continue;
+    const r=(5+Math.min(5,h.work*.5))*sz;ctx.fillStyle='#2f6fde';ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(x-r,y-r,2*r,2*r,3);ctx.fill();ctx.stroke();
+    pins.push({x,y,r,html:()=>`<b>${placeName(h.lat,h.lon)}</b><span>${h.work} Hotelnacht${h.work>1?'e':''} · ${h.nights.slice(0,6).map(fmtDay).join(', ')}${h.nights.length>6?' …':''}</span>`})}
+  if(st.layers.sites){const mh=R.sites[0]?.hours||1;for(const s of R.sites){const [x,y]=XY(s.lat,s.lon);if(x<-10||y<-10||x>W+10||y>H+10)continue;
+    const r=(4+7*Math.sqrt(s.hours/mh))*sz;ctx.fillStyle='#e4572e';ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();ctx.stroke();
+    pins.push({x,y,r,html:()=>`<b>${placeName(s.lat,s.lon)}</b><span>${nf.format(s.hours)} Std an ${s.days.length} Tag${s.days.length>1?'en':''} · ${s.kmWork} km von der Firma<br>erstmals ${fmtDayY(s.days[0][0])}</span>`})}}
+}
+const zoom=d3.zoom().scaleExtent([.7,80]).on('zoom',e=>{T=e.transform;$('#pop').style.display='none';redraw();drawOver();scheduleHeat()});
+d3.select(cv).call(zoom).on('dblclick.zoom',null);
+const zoomBy=f=>d3.select(cv).transition().duration(250).call(zoom.scaleBy,f);
+$('#zin').onclick=()=>zoomBy(1.8);$('#zout').onclick=()=>zoomBy(1/1.8);
+$('#zfit').onclick=()=>d3.select(cv).transition().duration(400).call(zoom.transform,d3.zoomIdentity);
+function flyTo(la,lo,k){const p=proj([lo,la]);d3.select(cv).transition().duration(700).call(zoom.transform,d3.zoomIdentity.translate(W/2-p[0]*k,H/2-p[1]*k).scale(k));card.scrollIntoView({behavior:'smooth',block:'center'})}
+cv.addEventListener('click',e=>{
+  const b=cv.getBoundingClientRect(),x=e.clientX-b.left,y=e.clientY-b.top;
+  if(st.pick){const p=proj.invert([(x-T.x)/T.k,(y-T.y)/T.k]);settings[st.pick]=[+p[1].toFixed(5),+p[0].toFixed(5)];LS.set('zeitachse.settings',settings);st.pick=null;$('#pickhint').style.display='none';recompute();return}
+  let hit=null;for(let i=pins.length-1;i>=0;i--){const p=pins[i];if(Math.hypot(p.x-x,p.y-y)<=p.r+5){hit=p;break}}
+  const pop=$('#pop');if(!hit){pop.style.display='none';return}
+  pop.innerHTML=hit.html();pop.style.display='block';
+  const pw=pop.offsetWidth,ph=pop.offsetHeight;pop.style.left=Math.max(8,Math.min(W-pw-8,hit.x-pw/2))+'px';pop.style.top=(hit.y-hit.r-ph-8<60?hit.y+hit.r+8:hit.y-hit.r-ph-8)+'px';
+});
+
+/* ---------- Zeitleiste (eigene Ebene, ruckelfrei) ---------- */
+function drawOver(){
+  octx.setTransform(dpr,0,0,dpr,0,0);octx.clearRect(0,0,W,H);
+  if(!tl.on||!R)return;
+  const from=Math.max(0,tl.i-4);octx.lineJoin=octx.lineCap='round';
+  for(let d=from;d<=tl.i;d++){
+    const p=R.tl[d][1],n=p.length/3,cur=d===tl.i;const m=cur?Math.max(1,Math.min(n,Math.ceil(n*tl.prog))):n;
+    if(n<1)continue;octx.beginPath();
+    for(let j=0;j<m;j++){const [x,y]=XY(p[j*3],p[j*3+1]);j?octx.lineTo(x,y):octx.moveTo(x,y)}
+    if(cur&&m<n&&m>0){const f=n*tl.prog-(m-1);const [x1,y1]=XY(p[(m-1)*3],p[(m-1)*3+1]);const [x2,y2]=XY(p[m*3],p[m*3+1]);octx.lineTo(x1+(x2-x1)*Math.max(0,Math.min(1,f)),y1+(y2-y1)*Math.max(0,Math.min(1,f)))}
+    octx.strokeStyle=cur?'#1d2433':`rgba(29,36,51,${.12+.06*(d-from)})`;octx.lineWidth=cur?3:2;octx.stroke();
+    if(cur){const q=octx.getTransform();const pt=lastPt(p,m,n);octx.fillStyle='#e4572e';octx.strokeStyle='#fff';octx.lineWidth=2.5;octx.beginPath();octx.arc(pt[0],pt[1],6,0,7);octx.fill();octx.stroke();
+      const mins=p[Math.max(0,m-1)*3+2];const t=String(mins/60|0).padStart(2,'0')+':'+String(mins%60).padStart(2,'0');
+      octx.font='600 12px Inter,sans-serif';octx.lineWidth=3;octx.strokeStyle='#fff';octx.strokeText(t,pt[0]+10,pt[1]-10);octx.fillStyle='#1d2433';octx.fillText(t,pt[0]+10,pt[1]-10)}
+  }
+}
+function lastPt(p,m,n){const [x1,y1]=XY(p[(m-1)*3],p[(m-1)*3+1]);if(m>=n)return [x1,y1];const [x2,y2]=XY(p[m*3],p[m*3+1]);const f=Math.max(0,Math.min(1,n*tl.prog-(m-1)));return [x1+(x2-x1)*f,y1+(y2-y1)*f]}
+const slider=$('#slider');let cum=[];
+function tlLabel(){const [d,,km]=R.tl[tl.i];$('#pd').textContent=fmtDayY(d);$('#pk').textContent=nf.format(km)+' km · gesamt '+nf.format(cum[tl.i])+' km';slider.value=tl.i}
+function setPlay(on){tl.play=on;$('#pic').setAttribute('d',on?'M3 1.5h3v11H3zM8 1.5h3v11H8z':'M3 1.5v11l9-5.5z')}
+let last=0;
+function frame(now){
+  if(!tl.play)return;const dt=Math.min(64,now-last);last=now;
+  const n=R.tl[tl.i][1].length/3;const dur=(n>20?1600:300)/tl.speed;tl.prog+=dt/dur;
+  if(tl.prog>=1){if(tl.i>=R.tl.length-1){tl.prog=1;setPlay(false);drawOver();return}tl.i++;tl.prog=0;tlLabel()}
+  drawOver();requestAnimationFrame(frame);
+}
+$('#play').onclick=()=>{if(!R)return;if(!tl.on){tl.on=true;redraw()}
+  if(tl.play){setPlay(false);return}
+  if(tl.i>=R.tl.length-1&&tl.prog>=1)tl.i=0;if(tl.prog>=1)tl.prog=0;tlLabel();setPlay(true);last=performance.now();requestAnimationFrame(frame)};
+slider.oninput=()=>{if(!tl.on){tl.on=true;redraw()}tl.i=+slider.value;tl.prog=1;tlLabel();drawOver()};
+const SPEEDS=[1,3,8];$('#speed').onclick=e=>{tl.speed=SPEEDS[(SPEEDS.indexOf(tl.speed)+1)%3];e.target.textContent=tl.speed+'×'};
+
+/* ---------- Bedienelemente ---------- */
+function segBind(sel,attr,cb){$$(sel+' button').forEach(b=>b.onclick=()=>{$$(sel+' button').forEach(x=>x.classList.remove('on'));b.classList.add('on');cb(b.dataset[attr])})}
+segBind('#kind','k',v=>{st.kind=v;renderHeat();redraw()});
+$('#month').onchange=e=>{st.month=e.target.value;renderHeat();redraw()};
+$$('#layers button').forEach(b=>b.onclick=()=>{const l=b.dataset.l;st.layers[l]=!st.layers[l];b.classList.toggle('on',st.layers[l]);$('#pop').style.display='none';redraw()});
+$$('#tabs button').forEach(b=>b.onclick=()=>{$$('#tabs button').forEach(x=>x.classList.remove('on'));b.classList.add('on');$$('.pane').forEach(p=>p.classList.toggle('on',p.id==='p-'+b.dataset.t))});
+segBind('#sitef','f',v=>{st.siteF=v;renderSites()});
+$$('[data-pick]').forEach(b=>b.onclick=()=>{st.pick=b.dataset.pick;$('#pickhint').style.display='block';card.scrollIntoView({behavior:'smooth',block:'center'})});
+$('#workAuto').onclick=()=>{settings.work=null;LS.set('zeitachse.settings',settings);recompute()};
+$('#apply').onclick=()=>{settings.freeText=$('#free').value;LS.set('zeitachse.settings',settings);$('#applied').textContent='Wird neu berechnet …';recompute()};
+$('#forget').onclick=async()=>{await forgetFile();$('#forget').textContent='Gelöscht'};
+
+/* ---------- Ergebnis anzeigen ---------- */
+function onResult(){
+  $('#start').classList.add('hidden');$('#app').classList.remove('hidden');$('#newfile').classList.remove('hidden');$('#status').textContent='';$('#applied').textContent='';
+  const s=R.stats;
+  $('#range').textContent=fmtDayY(R.firstDay)+' – '+fmtDayY(R.lastDay);
+  $('#sKm').textContent=nf.format(s.kmCar);$('#sWork').textContent=nf.format(s.kmWork);
+  $('#sNights').textContent=nf.format(s.hotelNights);$('#sRec').textContent=nf.format(s.recordKm)+' km';$('#sRecL').textContent='Rekordtag · '+fmtDayY(s.recordDay);
+  const ms=$('#month');ms.innerHTML='<option value="all">Ganzer Zeitraum</option>'+R.months.map((m,i)=>`<option value="${i}">${MON[+m.slice(5)-1]} ${m.slice(0,4)}</option>`).join('');
+  if(st.month!=='all'&&+st.month>=R.months.length)st.month='all';ms.value=st.month;
+  let c=0;cum=R.tl.map(t=>c+=t[2]);slider.max=R.tl.length-1;tl.i=Math.min(tl.i,R.tl.length-1);
+  $('#cHome').textContent=R.home.map(v=>v.toFixed(4)).join(', ');
+  $('#cWork').textContent=R.work?R.work.map(v=>v.toFixed(4)).join(', ')+(R.workAuto?' (automatisch erkannt)':''):'nicht erkannt';
+  $('#free').value=settings.freeText||'';
+  const first=!W;resize();if(first)T=d3.zoomIdentity;renderTables();
+}
+function renderTables(){if(!R)return;renderSites();renderDiary();renderHotels();renderMonths();
+  if(R.work)$('#cWork').textContent=placeName(R.work[0],R.work[1])+' · '+R.work.map(v=>v.toFixed(4)).join(', ')+(R.workAuto?' (automatisch erkannt)':'');
+  $('#cHome').textContent=placeName(R.home[0],R.home[1])+' · '+R.home.map(v=>v.toFixed(4)).join(', ')}
+function renderSites(){
+  const list=R.sites.filter(s=>st.siteF==='all'||s.kmWork>50).slice(0,25),mh=list[0]?.hours||1;
+  $('#tSites').innerHTML=list.map((s,i)=>`<tr class="click" data-i="${R.sites.indexOf(s)}"><td class="rk">${i+1}</td><td><div>${placeName(s.lat,s.lon)}</div><div class="m">${s.kmWork} km von der Firma · ${fmtDayY(s.days[0][0])}${s.days.length>1?' – '+fmtDayY(s.days[s.days.length-1][0]):''}</div><div class="meter"><div style="width:${s.hours/mh*100}%"></div></div></td><td class="num">${nf.format(s.hours)}</td><td class="num">${s.days.length}</td></tr>`).join('')||'<tr><td colspan="4" class="m">Keine Einsatzorte gefunden.</td></tr>';
+  $$('#tSites tr.click').forEach(tr=>tr.onclick=()=>{const s=R.sites[+tr.dataset.i];if(!st.layers.sites)$('#layers [data-l=sites]').click();flyTo(s.lat,s.lon,s.kmWork<20?30:10)});
+}
+function renderDiary(){
+  const by={};R.sites.forEach(s=>s.days.forEach(([d,h])=>(by[d]||=[]).push([placeName(s.lat,s.lon),h])));
+  const hotel={};R.hotels.forEach(h=>h.work&&h.nights.forEach(n=>hotel[n]=placeName(h.lat,h.lon)));
+  const km={};R.tl.forEach(([d,,k])=>km[d]=k);
+  const mons={};Object.keys(by).sort().forEach(d=>(mons[d.slice(0,7)]||=[]).push(d));
+  const hfmt=h=>h<1?Math.round(h*60)+' min':(Math.round(h*2)/2).toString().replace('.',',')+' h';
+  $('#diary').innerHTML=Object.keys(mons).sort().reverse().map((m,i)=>`<details${i===0?' open':''}><summary>${MON[+m.slice(5)-1]} ${m.slice(0,4)}<span>${mons[m].length} Tage</span></summary>${mons[m].map(d=>`<div class="drow"><span class="d">${fmtDay(d)}</span><div>${by[d].sort((a,b)=>b[1]-a[1]).map(([o,h])=>`<span class="pill">${o} · ${hfmt(h)}</span>`).join('')}${hotel[d]?`<span class="pill h">Hotel ${hotel[d]}</span>`:''}</div><span class="m">${nf.format(km[d]||0)} km</span></div>`).join('')}</details>`).join('')||'<p class="m">Noch keine Einträge.</p>';
+}
+function renderHotels(){
+  const list=R.hotels.filter(h=>h.work);
+  $('#tHotels').innerHTML=list.map(h=>`<tr class="click" data-la="${h.lat}" data-lo="${h.lon}"><td>${placeName(h.lat,h.lon)}</td><td class="m">${h.nights.map(fmtDay).join(', ')}</td><td class="num">${h.work}</td></tr>`).join('')+`<tr><td colspan="2"><b>Gesamt</b></td><td class="num"><b>${list.reduce((a,h)=>a+h.work,0)}</b></td></tr>`;
+  $$('#tHotels tr.click').forEach(tr=>tr.onclick=()=>{if(!st.layers.hotels)$('#layers [data-l=hotels]').click();flyTo(+tr.dataset.la,+tr.dataset.lo,10)});
+}
+function renderMonths(){
+  const s=R.stats,ms=Object.keys(s.kmMonth).sort();
+  $('#tMonths').innerHTML=ms.map(m=>`<tr><td>${MON[+m.slice(5)-1]} ${m.slice(0,4)}</td><td class="num">${nf.format(s.kmMonth[m])}</td><td class="num">${nf.format(s.kmWorkMonth[m]||0)}</td></tr>`).join('')+`<tr><td><b>Gesamt</b></td><td class="num"><b>${nf.format(s.kmCar)}</b></td><td class="num"><b>${nf.format(s.kmWork)}</b></td></tr>`;
+}
+</script>
+</body>
+</html>
