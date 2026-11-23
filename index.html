@@ -38,7 +38,7 @@ h1{font-size:20px;margin:0;font-weight:700;letter-spacing:-.01em}
 .stat .l{font-size:12px;color:var(--mute)}
 @media(max-width:640px){.stats{grid-template-columns:repeat(2,1fr)}.stat .v{font-size:19px}}
 /* Map */
-#mapcard{position:relative;overflow:hidden;height:min(68vh,640px);min-height:420px}
+#mapcard{position:relative;overflow:hidden;height:min(68vh,640px);height:min(68svh,640px);min-height:420px}
 #mapcard canvas{position:absolute;inset:0;width:100%;height:100%}
 #base{touch-action:none;cursor:grab}
 #over{pointer-events:none}
@@ -57,19 +57,20 @@ h1{font-size:20px;margin:0;font-weight:700;letter-spacing:-.01em}
 .play svg{width:14px;height:14px}
 .pinfo{min-width:120px;flex:none}
 .pinfo b{display:block;font-size:13px}.pinfo span{font-size:12px;color:var(--mute)}
-.player input{flex:1;accent-color:var(--acc)}
+.player input{flex:1;min-width:0;accent-color:var(--acc)}
 .speed{border:1px solid var(--line);background:#fff;border-radius:8px;padding:4px 8px;font-size:12px;cursor:pointer;flex:none}
-@media(max-width:560px){.pinfo{min-width:96px}.speed{display:none}}
+.tlx{border:0;background:none;color:var(--mute);font-size:15px;cursor:pointer;padding:4px;flex:none}
+@media(max-width:560px){.player{gap:8px;padding:8px}.pinfo{min-width:0;flex:none;width:92px}.pinfo span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px}.speed{padding:4px 6px}}
 .pop{position:absolute;z-index:3;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13px;box-shadow:0 6px 20px rgba(16,24,40,.15);display:none;max-width:260px;pointer-events:none}
 .pop b{display:block}.pop span{color:var(--mute);font-size:12px}
-.pickhint{position:absolute;left:50%;top:56px;transform:translateX(-50%);z-index:3;background:var(--txt);color:#fff;border-radius:10px;padding:8px 12px;font-size:13px;display:none}
+.pickhint{position:absolute;left:50%;top:110px;transform:translateX(-50%);z-index:3;background:var(--txt);color:#fff;border-radius:10px;padding:8px 12px;font-size:13px;display:none}
 .legend{display:flex;gap:16px;align-items:center;flex-wrap:wrap;color:var(--mute);font-size:12px;margin:10px 2px 16px}
 .legend i{display:inline-block;vertical-align:middle;margin-right:6px}
 .grad{width:90px;height:8px;border-radius:4px;background:linear-gradient(90deg,#f6c3a8,#f4a259,#e4572e,#8f1d3a)}
 .dot{width:10px;height:10px;border-radius:50%;background:var(--acc);border:2px solid #fff;box-shadow:0 0 0 1px var(--acc)}
 .sq{width:10px;height:10px;border-radius:3px;background:var(--blue)}
 /* Tabs */
-.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:0;overflow-x:auto}
+.tabs{display:flex;flex-wrap:wrap;gap:0 4px;border-bottom:1px solid var(--line);margin-bottom:0}
 .tabs button{border:0;background:none;padding:10px 12px;cursor:pointer;font-weight:500;color:var(--mute);border-bottom:2px solid transparent;white-space:nowrap}
 .tabs button.on{color:var(--txt);border-color:var(--txt)}
 .pane{display:none;padding:6px 0 0}.pane.on{display:block}
@@ -103,6 +104,23 @@ footer{color:var(--mute);font-size:12px;margin:22px 2px 30px}
 .check{display:flex;gap:8px;align-items:center;font-weight:500}
 .explain{font-size:13px;color:var(--mute);background:var(--soft);border-radius:10px;padding:10px 12px}
 .explain ul{margin:6px 0 0;padding-left:18px}
+.attr{position:absolute;right:56px;bottom:66px;z-index:2;font-size:10px;color:#555;background:rgba(255,255,255,.8);padding:1px 6px;border-radius:4px}
+.attr a{color:inherit}
+.toast{position:absolute;left:50%;top:60px;transform:translateX(-50%);z-index:4;background:var(--txt);color:#fff;border-radius:10px;padding:8px 12px;font-size:12px;max-width:85%}
+.hotel{border-bottom:1px solid var(--line);padding:12px 2px}
+.hrow{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.hrow>div:first-child{flex:1;min-width:0}
+.hname{width:100%;border:0;border-bottom:1px dashed transparent;font-weight:600;font-size:14px;padding:2px 0;background:none}
+.hname:hover,.hname:focus{border-bottom-color:var(--line);outline:none}
+.hname::placeholder{color:var(--txt);opacity:.75}
+.stars{display:flex;flex:none}
+.stars button{border:0;background:none;font-size:18px;color:#d0d5dd;cursor:pointer;padding:0 1px}
+.stars button.on{color:#f5a524}
+.hnote{width:100%;margin-top:8px;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:13px;resize:vertical}
+.hlinks{display:flex;gap:14px;margin-top:6px;font-size:13px}
+.hlinks a{color:var(--blue);text-decoration:none;font-weight:500}
+.gbox{margin:10px 2px 0}
+.gname{font-size:12px;color:var(--mute)}
 .hidden{display:none!important}
 </style>
 </head>
@@ -138,13 +156,14 @@ footer{color:var(--mute);font-size:12px;margin:22px 2px 30px}
       <div class="card stat"><div class="v" id="sRec">–</div><div class="l" id="sRecL">Rekordtag</div></div>
     </div>
 
-    <div class="hint-bar hidden" id="freehint">Noch kein Urlaub eingetragen – Urlaubsfahrten unter der Woche zählen sonst als Arbeit. <a href="#" id="gofree">Jetzt eintragen</a></div>
+    <div class="hint-bar hidden" id="freehint"></div>
     <div class="card" id="mapcard">
       <canvas id="base"></canvas><canvas id="over"></canvas>
       <div class="tb tl">
         <div class="seg" id="kind"><button data-k="all" class="on">Alle</button><button data-k="1">Arbeit</button><button data-k="0">Freizeit</button></div>
         <select class="sel" id="month"></select>
         <span class="spacer"></span>
+        <div class="seg" id="style"><button data-s="tiles" class="on">Karte</button><button data-s="simple">Einfach</button></div>
         <div class="seg" id="layers"><button data-l="sites">Einsatzorte</button><button data-l="hotels">Hotels</button></div>
       </div>
       <div class="zoomb"><button id="zin" aria-label="Hineinzoomen">+</button><button id="zout" aria-label="Herauszoomen">−</button><button id="zfit" aria-label="Alles zeigen" style="font-size:13px">⤢</button></div>
@@ -152,10 +171,12 @@ footer{color:var(--mute);font-size:12px;margin:22px 2px 30px}
         <button class="play" id="play" aria-label="Abspielen"><svg viewBox="0 0 14 14"><path id="pic" d="M3 1.5v11l9-5.5z" fill="currentColor"/></svg></button>
         <div class="pinfo"><b id="pd">Zeitleiste</b><span id="pk">Tag für Tag abspielen</span></div>
         <input type="range" id="slider" min="0" value="0" aria-label="Tag">
-        <button class="speed" id="speed">1×</button>
+        <button class="speed" id="speed" aria-label="Geschwindigkeit">1×</button>
+        <button class="tlx hidden" id="tlclose" aria-label="Zeitleiste schließen">✕</button>
       </div>
+      <div class="attr" id="attr">© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>-Mitwirkende © <a href="https://carto.com/attributions">CARTO</a></div>
       <div class="pop" id="pop"></div>
-      <div class="pickhint" id="pickhint">Tippe auf die Karte, um den Ort zu setzen</div>
+      <div class="pickhint" id="pickhint" style="cursor:pointer">Tippe auf die Karte, um den Ort zu setzen · Abbrechen ✕</div>
     </div>
     <div class="legend">
       <span><i class="grad"></i>Aufenthalt: selten → oft</span>
@@ -166,6 +187,7 @@ footer{color:var(--mute);font-size:12px;margin:22px 2px 30px}
     <div class="card" style="padding:4px 12px 10px">
       <div class="tabs" id="tabs">
         <button data-t="sites" class="on">Einsatzorte</button>
+        <button data-t="tours">Touren</button>
         <button data-t="diary">Tagebuch</button>
         <button data-t="hotels">Hotels</button>
         <button data-t="months">Monate</button>
@@ -175,9 +197,18 @@ footer{color:var(--mute);font-size:12px;margin:22px 2px 30px}
         <div class="row" style="display:flex;gap:8px;margin:10px 0 2px"><div class="seg" id="sitef"><button data-f="all" class="on">Alle</button><button data-f="far">Über 50 km</button></div></div>
         <table><thead><tr><th class="rk">#</th><th>Ort</th><th class="num">Stunden</th><th class="num">Tage</th></tr></thead><tbody id="tSites"></tbody></table>
       </div>
+      <div class="pane" id="p-tours">
+        <div style="display:flex;gap:8px;margin:10px 0 2px"><div class="seg" id="tourf"><button data-f="all" class="on">Alle</button><button data-f="check">Prüfen</button></div></div>
+        <table><thead><tr><th>Zeitraum</th><th>Ziel</th><th class="num">km</th></tr></thead><tbody id="tTours"></tbody></table>
+        <p class="m">„Prüfen“ = Touren, die nicht in der Firma begonnen haben und weit weg gingen – oft Urlaub. Privat → „war frei“, sonst „war Arbeit“.</p>
+      </div>
       <div class="pane" id="p-diary"><div id="diary"></div></div>
       <div class="pane" id="p-hotels">
-        <table><thead><tr><th>Ort</th><th>Nächte</th><th class="num">Anzahl</th></tr></thead><tbody id="tHotels"></tbody></table>
+        <div class="gbox" id="gbox">
+          <div class="row" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn pri" id="gfetch">Hotelnamen von Google holen</button><span class="m" id="gstatus"></span></div>
+        </div>
+        <p class="m" style="margin:10px 2px">„In Maps öffnen“ zeigt die genaue Unterkunft mit Namen. Trag dir Name, Sterne und eine Notiz ein – das bleibt gespeichert und taucht nächstes Jahr beim gleichen Hotel wieder auf.</p>
+        <div id="tHotels"></div>
       </div>
       <div class="pane" id="p-months">
         <table><thead><tr><th>Monat</th><th class="num">Auto gesamt</th><th class="num">davon Arbeit</th></tr></thead><tbody id="tMonths"></tbody></table>
@@ -190,15 +221,34 @@ footer{color:var(--mute);font-size:12px;margin:22px 2px 30px}
           <div><label for="free">Urlaub &amp; freie Tage</label>
             <textarea id="free" placeholder="2025-12-24 bis 2026-01-06&#10;2026-08-15 bis 2026-08-22&#10;2026-06-26"></textarea>
             <div class="m">Ein Tag oder Zeitraum pro Zeile. Diese Tage zählen nicht als Arbeit.</div></div>
-          <label class="check"><input type="checkbox" id="hol" checked> Gesetzliche Feiertage (Italien, Pfingstmontag) als frei zählen</label>
+          <label class="check"><input type="checkbox" id="nowork"> Keine Firma – ich fahre direkt von daheim zu den Einsätzen</label>
+          <div><label for="region">Feiertage</label>
+            <select class="sel" id="region" style="box-shadow:none">
+              <option value="auto">Automatisch (nach Wohnort)</option><option value="IT-BZ">Italien – Südtirol</option><option value="IT">Italien</option>
+              <option value="AT">Österreich</option><option value="DE">Deutschland (bundesweit)</option><option value="DE-BY">Deutschland – Bayern</option>
+              <option value="DE-BW">Deutschland – Baden-Württemberg</option><option value="CH">Schweiz</option><option value="none">Keine</option>
+            </select> <span class="m" id="regionInfo"></span></div>
+          <div><label>Arbeitstage</label><div class="seg" id="wdays" style="box-shadow:none"></div></div>
+          <div><label for="awaykm">Auswärts übernachtet ab</label><div class="row"><input id="awaykm" type="number" min="10" max="300" step="5" style="width:80px;border:1px solid var(--line);border-radius:8px;padding:6px 8px"> <span class="m">km von daheim</span></div></div>
           <div class="row"><button class="btn pri" id="apply">Übernehmen</button><span class="m" id="applied"></span></div>
           <div class="explain"><b>So wird Arbeit gezählt</b>
             <ul>
               <li>Eine Arbeitstour beginnt, wenn du an einem Arbeitstag von der Firma wegfährst – oder morgens direkt von daheim zur Baustelle.</li>
               <li>Sie endet, sobald du wieder in der Firma oder daheim bist. Fahrten danach (abends, privat) zählen nicht.</li>
               <li>Der Weg daheim ↔ Firma zählt nie. Mehrtägige Touren mit Hotel laufen durch bis zur Rückkehr.</li>
-              <li>Wochenenden, Feiertage und eingetragene freie Tage zählen nicht.</li>
+              <li>Nur Arbeitstage zählen – Feiertage und eingetragene freie Tage nicht.</li>
             </ul></div>
+          <div><label for="gkey">Google-API-Schlüssel <span class="m" style="font-weight:400">(optional, für Hotelnamen)</span></label>
+            <div class="row"><input id="gkey" type="password" autocomplete="off" placeholder="AIza…" style="flex:1;min-width:200px;border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-family:ui-monospace,Menlo,monospace;font-size:13px"><button class="btn" id="gsave">Speichern</button></div>
+            <details class="m" style="border:0;margin-top:6px"><summary style="padding:4px 0;font-weight:500;font-size:13px">So bekommst du einen Schlüssel</summary>
+              <ol style="margin:6px 0;padding-left:18px">
+                <li>console.cloud.google.com öffnen, Projekt anlegen, Abrechnungskonto verbinden (für ein paar Dutzend Abfragen im Monat fallen keine Kosten an).</li>
+                <li>Unter „APIs &amp; Dienste → Bibliothek“ <b>Maps JavaScript API</b> und <b>Places API (New)</b> aktivieren.</li>
+                <li>„Anmeldedaten → Anmeldedaten erstellen → API-Schlüssel“.</li>
+                <li>Schlüssel einschränken: Websites → <code>https://fubee00.github.io/*</code> (bzw. eure Adresse), APIs → nur die zwei oben.</li>
+              </ol>
+              Der Schlüssel bleibt nur in diesem Browser gespeichert. Funktioniert auf GitHub Pages, nicht in der Claude-Vorschau.
+            </details></div>
           <div><label>Gespeicherte Daten</label><div class="row"><button class="btn" id="forget">Datei aus diesem Browser löschen</button></div>
             <div class="m">Die Datei bleibt nur in diesem Browser gespeichert, damit du sie nicht jedes Mal neu laden musst.</div></div>
         </div>
@@ -222,10 +272,14 @@ const DE={'San Lorenzo di Sebato':'St. Lorenzen','Laives':'Leifers','Campo Tures
 
 /* ---------- Zustand ---------- */
 let R=null, BASE=null, CITIES=null, GAZ=null, gazGrid=null;
-const st={kind:'all',month:'all',layers:{sites:false,hotels:false},pick:null,siteF:'all'};
-const tl={on:false,play:false,i:0,prog:1,speed:1};
+const st={style:'tiles',tilesFailed:false,kind:'all',month:'all',layers:{sites:false,hotels:false},pick:null,siteF:'all',tourF:'all'};
+const tl={on:false,play:false,i:0,prog:1,speed:1,dot:null};
 const LS={get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
-let settings=LS.get('zeitachse.settings',{home:null,work:null,freeText:''});
+// Einstellungen gehören zur jeweiligen Datei (zwei Leute am gleichen Gerät kommen sich nicht in die Quere)
+let fileKey=LS.get('zeitachse.lastKey','default');
+const SKEY=()=>'zeitachse.settings:'+fileKey;
+let settings=LS.get(SKEY(),LS.get('zeitachse.settings',{freeText:''}));
+function useFile(f){const k=(f&&f.name?f.name:'datei')+'|'+(f&&f.size||0);if(k!==fileKey){fileKey=k;LS.set('zeitachse.lastKey',k);settings=LS.get(SKEY(),{freeText:''})}}
 
 /* ---------- Worker ---------- */
 const worker=new Worker('worker.js');
@@ -244,8 +298,8 @@ function freeDays(text){
   }
   return out;
 }
-const opts=()=>({home:settings.home,work:settings.work,free:freeDays(settings.freeText),holidays:settings.holidays!==false});
-function loadFile(file){$('#status').textContent='Datei wird gelesen …';worker.postMessage({cmd:'load',file,opts:opts()});saveFile(file)}
+const opts=()=>({home:settings.home,work:settings.work,noWork:!!settings.noWork,free:freeDays(settings.freeText),region:settings.region||'auto',workDays:settings.workDays||[1,2,3,4,5],awayKm:settings.awayKm||40,ok:settings.ok||[]});
+function loadFile(file){useFile(file);$('#status').textContent='Datei wird gelesen …';worker.postMessage({cmd:'load',file,opts:opts()});saveFile(file)}
 function recompute(){if(R)worker.postMessage({cmd:'run',opts:opts()})}
 
 /* Datei im Browser merken (IndexedDB) */
@@ -257,12 +311,12 @@ async function forgetFile(){try{const db=await idb();db.transaction('f','readwri
 /* ---------- Start ---------- */
 const drop=$('#drop'),fi=$('#file');
 drop.onclick=()=>fi.click();
-fi.onchange=()=>fi.files[0]&&loadFile(fi.files[0]);
+fi.onchange=()=>{if(fi.files[0])loadFile(fi.files[0]);fi.value=''};
 ['dragenter','dragover'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add('over')}));
 ['dragleave','drop'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.remove('over')}));
 drop.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f)loadFile(f)});
 $('#newfile').onclick=()=>{$('#app').classList.add('hidden');$('#start').classList.remove('hidden');$('#newfile').classList.add('hidden');$('#status').textContent=''};
-readFile().then(f=>{if(f){$('#status').textContent='Gespeicherte Datei wird geladen …';worker.postMessage({cmd:'load',file:f,opts:opts()})}});
+readFile().then(f=>{if(f){useFile(f);$('#status').textContent='Gespeicherte Datei wird geladen …';worker.postMessage({cmd:'load',file:f,opts:opts()})}});
 
 /* ---------- Basisdaten ---------- */
 Promise.all([fetch('data/laender.json').then(r=>r.json()),fetch('data/strassen.json').then(r=>r.json()),fetch('data/staedte.json').then(r=>r.json())])
@@ -297,10 +351,14 @@ function fit(){
   const b=[[q(lo,.005)-.3,q(la,.005)-.2],[q(lo,.995)+.3,q(la,.995)+.2]];
   proj.fitExtent([[24,64],[W-24,H-80]],{type:'MultiPoint',coordinates:b});
 }
-function resize(){
+let fitFor='';
+function resize(force){
   dpr=Math.min(2,window.devicePixelRatio||1);W=card.clientWidth;H=card.clientHeight;
   for(const c of [cv,ov]){c.width=W*dpr;c.height=H*dpr}
-  fit();buildPaths();heatCache=null;redraw();drawOver();
+  // nur neu einpassen, wenn sich Breite oder Daten ändern (nicht beim Scrollen am Handy)
+  const key=W+'|'+(R?R.firstDay+R.lastDay+R.home:'');
+  if(force||key!==fitFor||!P){fit();buildPaths();fitFor=key}
+  heatCache=null;redraw();drawOver();
 }
 new ResizeObserver(()=>{if(!$('#app').classList.contains('hidden'))resize()}).observe(card);
 
@@ -334,11 +392,46 @@ let heatTimer=0;
 function scheduleHeat(){clearTimeout(heatTimer);heatTimer=setTimeout(()=>{renderHeat();redraw()},140)}
 
 const pins=[];
+/* Detailkarte: Rasterkacheln (OpenStreetMap-Daten, Stil CARTO Voyager) */
+const tiles=new Map();let tileErr=0,tileRaf=0;
+function tileImg(z,x,y){
+  const k=z+'/'+x+'/'+y;let t=tiles.get(k);
+  if(!t){
+    if(tiles.size>600)tiles.clear();
+    const img=new Image();t={img,ok:false};tiles.set(k,t);
+    img.onload=()=>{t.ok=true;tileErr=0;if(!tileRaf)tileRaf=requestAnimationFrame(()=>{tileRaf=0;redraw()})};
+    img.onerror=()=>{if(++tileErr>6&&!st.tilesFailed){st.tilesFailed=true;setStyle('simple');toast('Die Detailkarte kann hier nicht geladen werden – auf GitHub Pages geht sie.')}};
+    img.src=`https://${'abcd'[(x+y)%4]}.basemaps.cartocdn.com/rastertiles/voyager/${z}/${x}/${y}${dpr>1?'@2x':''}.png`;
+  }
+  return t;
+}
+const lon2x=(lo,n)=>(lo+180)/360*n, lat2y=(la,n)=>(1-Math.log(Math.tan(la*Math.PI/180)+1/Math.cos(la*Math.PI/180))/Math.PI)/2*n;
+const x2lon=(x,n)=>x/n*360-180, y2lat=(y,n)=>Math.atan(Math.sinh(Math.PI*(1-2*y/n)))*180/Math.PI;
+function drawTiles(){
+  const worldPx=2*Math.PI*proj.scale()*T.k;const z=Math.max(2,Math.min(18,Math.round(Math.log2(worldPx/256))));const n=2**z;
+  const a=proj.invert([(0-T.x)/T.k,(0-T.y)/T.k]),b=proj.invert([(W-T.x)/T.k,(H-T.y)/T.k]);
+  const x0=Math.max(0,Math.floor(lon2x(a[0],n))),x1=Math.min(n-1,Math.floor(lon2x(b[0],n))),y0=Math.max(0,Math.floor(lat2y(a[1],n))),y1=Math.min(n-1,Math.floor(lat2y(b[1],n)));
+  if((x1-x0+1)*(y1-y0+1)>120)return;
+  for(let x=x0;x<=x1;x++)for(let y=y0;y<=y1;y++){
+    const p1=XY(y2lat(y,n),x2lon(x,n)),p2=XY(y2lat(y+1,n),x2lon(x+1,n));
+    const dx=Math.floor(p1[0]),dy=Math.floor(p1[1]),dw=Math.ceil(p2[0])-dx,dh=Math.ceil(p2[1])-dy;
+    const t=tileImg(z,x,y);
+    if(t.ok){ctx.drawImage(t.img,dx,dy,dw,dh);continue}
+    for(let d=1;d<=4&&z-d>=2;d++){ // gröbere Kachel als Platzhalter
+      const pt=tiles.get((z-d)+'/'+(x>>d)+'/'+(y>>d));if(!pt||!pt.ok)continue;
+      const sub=2**d,sw=pt.img.naturalWidth/sub;ctx.drawImage(pt.img,(x%sub)*sw,(y%sub)*sw,sw,sw,dx,dy,dw,dh);break}
+  }
+}
+function toast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;card.appendChild(t);setTimeout(()=>t.remove(),5000)}
+function setStyle(v){st.style=v;$$('#style button').forEach(b=>b.classList.toggle('on',b.dataset.s===v));$('#attr').classList.toggle('hidden',v!=='tiles');redraw()}
+
 function redraw(){
   if(!W)return;
   ctx.setTransform(dpr,0,0,dpr,0,0);
-  ctx.fillStyle='#b9d9f3';ctx.fillRect(0,0,W,H);
-  if(P){
+  const useTiles=st.style==='tiles'&&!st.tilesFailed;
+  ctx.fillStyle=useTiles?'#e8eef2':'#b9d9f3';ctx.fillRect(0,0,W,H);
+  if(useTiles)drawTiles();
+  else if(P){
     ctx.save();ctx.translate(T.x,T.y);ctx.scale(T.k,T.k);
     const k=T.k,lw=px=>px/k*Math.min(1.8,.8+k*.08);
     ctx.fillStyle='#f4f2ee';ctx.fill(P.land);
@@ -355,16 +448,17 @@ function redraw(){
     if(!heatCache)renderHeat();
     const s=T.k/heatCache.k;
     ctx.setTransform(1,0,0,1,0,0);
-    ctx.globalAlpha=tl.on?.3:1;
+    ctx.globalAlpha=tl.on?.3:(useTiles?.75:1);
     ctx.drawImage(heatC,(T.x-heatCache.x*s)*dpr,(T.y-heatCache.y*s)*dpr,heatC.width*s,heatC.height*s);
     ctx.globalAlpha=1;
   }
   ctx.setTransform(dpr,0,0,dpr,0,0);
-  drawLabels();drawPins();
+  drawLabels(useTiles);drawPins();
 }
 const XY=(la,lo)=>{const p=proj([lo,la]);return [p[0]*T.k+T.x,p[1]*T.k+T.y]};
-function drawLabels(){
+function drawLabels(tilesOn){
   if(!CITIES)return;
+  if(!tilesOn){
   const maxRank=T.k<1.5?4:T.k<3?6:T.k<6?8:10;const boxes=[];
   ctx.font='500 11px Inter,sans-serif';ctx.textBaseline='middle';
   for(const [la,lo,n,r] of CITIES){
@@ -374,6 +468,7 @@ function drawLabels(){
     ctx.fillStyle='#6b7280';ctx.beginPath();ctx.arc(x,y,2,0,7);ctx.fill();
     ctx.lineWidth=3;ctx.strokeStyle='rgba(255,255,255,.9)';ctx.strokeText(n,x+7,y);ctx.fillStyle='#374151';ctx.fillText(n,x+7,y);
   }
+  }
   if(R){const [x,y]=XY(R.home[0],R.home[1]);ctx.fillStyle='#1d2433';ctx.beginPath();ctx.arc(x,y,5,0,7);ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();
     ctx.font='600 11px Inter,sans-serif';ctx.lineWidth=3;ctx.strokeStyle='#fff';ctx.strokeText('Daheim',x+9,y-1);ctx.fillStyle='#1d2433';ctx.fillText('Daheim',x+9,y-1)}
   ctx.textBaseline='alphabetic';
@@ -382,10 +477,10 @@ function drawPins(){
   pins.length=0;if(!R)return;const sz=Math.min(1,.6+.1*T.k);
   if(st.layers.hotels)for(const h of R.hotels){if(!h.work)continue;const [x,y]=XY(h.lat,h.lon);if(x<-10||y<-10||x>W+10||y>H+10)continue;
     const r=(5+Math.min(5,h.work*.5))*sz;ctx.fillStyle='#2f6fde';ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(x-r,y-r,2*r,2*r,3);ctx.fill();ctx.stroke();
-    pins.push({x,y,r,html:()=>`<b>${placeName(h.lat,h.lon)}</b><span>${h.work} Hotelnacht${h.work>1?'e':''} · ${h.nights.slice(0,6).map(fmtDay).join(', ')}${h.nights.length>6?' …':''}</span>`})}
+    pins.push({x,y,r,html:()=>`<b>${esc(hDisplay(h))||placeName(h.lat,h.lon)}</b>${(notes[hkey(h)]||{}).stars?'<span style="color:#f5a524">'+'★'.repeat(notes[hkey(h)].stars)+'</span><br>':''}<span>${h.work} Hotelnacht${h.work>1?'e':''} · ${h.nights.slice(0,6).map(fmtDay).join(', ')}${h.nights.length>6?' …':''}</span>`})}
   if(st.layers.sites){const mh=R.sites[0]?.hours||1;for(const s of R.sites){const [x,y]=XY(s.lat,s.lon);if(x<-10||y<-10||x>W+10||y>H+10)continue;
     const r=(4+7*Math.sqrt(s.hours/mh))*sz;ctx.fillStyle='#e4572e';ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();ctx.stroke();
-    pins.push({x,y,r,html:()=>`<b>${placeName(s.lat,s.lon)}</b><span>${nf.format(s.hours)} Std an ${s.days.length} Tag${s.days.length>1?'en':''} · ${s.kmWork} km von der Firma<br>erstmals ${fmtDayY(s.days[0][0])}</span>`})}}
+    pins.push({x,y,r,html:()=>`<b>${placeName(s.lat,s.lon)}</b><span>${nf.format(s.hours)} Std an ${s.days.length} Tag${s.days.length>1?'en':''} · ${s.kmWork} km ${R.work&&!settings.noWork?'von der Firma':'von daheim'}<br>erstmals ${fmtDayY(s.days[0][0])}</span>`})}}
 }
 const zoom=d3.zoom().scaleExtent([.7,80]).on('zoom',e=>{T=e.transform;$('#pop').style.display='none';redraw();drawOver();scheduleHeat()});
 d3.select(cv).call(zoom).on('dblclick.zoom',null);
@@ -395,7 +490,7 @@ $('#zfit').onclick=()=>d3.select(cv).transition().duration(400).call(zoom.transf
 function flyTo(la,lo,k){const p=proj([lo,la]);d3.select(cv).transition().duration(700).call(zoom.transform,d3.zoomIdentity.translate(W/2-p[0]*k,H/2-p[1]*k).scale(k));card.scrollIntoView({behavior:'smooth',block:'center'})}
 cv.addEventListener('click',e=>{
   const b=cv.getBoundingClientRect(),x=e.clientX-b.left,y=e.clientY-b.top;
-  if(st.pick){const p=proj.invert([(x-T.x)/T.k,(y-T.y)/T.k]);settings[st.pick]=[+p[1].toFixed(5),+p[0].toFixed(5)];LS.set('zeitachse.settings',settings);st.pick=null;$('#pickhint').style.display='none';recompute();return}
+  if(st.pick){const p=proj.invert([(x-T.x)/T.k,(y-T.y)/T.k]);settings[st.pick]=[+p[1].toFixed(5),+p[0].toFixed(5)];LS.set(SKEY(),settings);st.pick=null;$('#pickhint').style.display='none';recompute();return}
   let hit=null;for(let i=pins.length-1;i>=0;i--){const p=pins[i];if(Math.hypot(p.x-x,p.y-y)<=p.r+5){hit=p;break}}
   const pop=$('#pop');if(!hit){pop.style.display='none';return}
   pop.innerHTML=hit.html();pop.style.display='block';
@@ -405,48 +500,79 @@ cv.addEventListener('click',e=>{
 /* ---------- Zeitleiste (eigene Ebene, ruckelfrei) ---------- */
 function drawOver(){
   octx.setTransform(dpr,0,0,dpr,0,0);octx.clearRect(0,0,W,H);
-  if(!tl.on||!R)return;
-  const from=Math.max(0,tl.i-4);octx.lineJoin=octx.lineCap='round';
+  if(!tl.on||!R||!R.tl.length)return;
+  octx.lineJoin=octx.lineCap='round';
+  const from=Math.max(0,tl.i-4);
   for(let d=from;d<=tl.i;d++){
-    const p=R.tl[d][1],n=p.length/3,cur=d===tl.i;const m=cur?Math.max(1,Math.min(n,Math.ceil(n*tl.prog))):n;
-    if(n<1)continue;octx.beginPath();
-    for(let j=0;j<m;j++){const [x,y]=XY(p[j*3],p[j*3+1]);j?octx.lineTo(x,y):octx.moveTo(x,y)}
-    if(cur&&m<n&&m>0){const f=n*tl.prog-(m-1);const [x1,y1]=XY(p[(m-1)*3],p[(m-1)*3+1]);const [x2,y2]=XY(p[m*3],p[m*3+1]);octx.lineTo(x1+(x2-x1)*Math.max(0,Math.min(1,f)),y1+(y2-y1)*Math.max(0,Math.min(1,f)))}
+    const p=R.tl[d][1],n=p.length/3;if(n<1)continue;
+    const cur=d===tl.i,pos=cur?posAt(p,n,tl.prog):null;
+    octx.beginPath();
+    let j=0;const end=cur?pos.j:n-1;
+    for(;j<=end;j++){const [x,y]=XY(p[j*3],p[j*3+1]);(j&&!jump(p,j))?octx.lineTo(x,y):octx.moveTo(x,y)}
+    if(cur&&!(pos.j<n-1&&jump(p,pos.j+1)))octx.lineTo(pos.x,pos.y);
     octx.strokeStyle=cur?'#1d2433':`rgba(29,36,51,${.12+.06*(d-from)})`;octx.lineWidth=cur?3:2;octx.stroke();
-    if(cur){const q=octx.getTransform();const pt=lastPt(p,m,n);octx.fillStyle='#e4572e';octx.strokeStyle='#fff';octx.lineWidth=2.5;octx.beginPath();octx.arc(pt[0],pt[1],6,0,7);octx.fill();octx.stroke();
-      const mins=p[Math.max(0,m-1)*3+2];const t=String(mins/60|0).padStart(2,'0')+':'+String(mins%60).padStart(2,'0');
-      octx.font='600 12px Inter,sans-serif';octx.lineWidth=3;octx.strokeStyle='#fff';octx.strokeText(t,pt[0]+10,pt[1]-10);octx.fillStyle='#1d2433';octx.fillText(t,pt[0]+10,pt[1]-10)}
+    if(cur){
+      octx.fillStyle='#e4572e';octx.strokeStyle='#fff';octx.lineWidth=2.5;octx.beginPath();octx.arc(pos.x,pos.y,6,0,7);octx.fill();octx.stroke();
+      const t=String(pos.min/60|0).padStart(2,'0')+':'+String(Math.floor(pos.min)%60).padStart(2,'0');
+      octx.font='600 12px Inter,sans-serif';octx.lineWidth=3;octx.strokeStyle='#fff';octx.strokeText(t,pos.x+10,pos.y-10);octx.fillStyle='#1d2433';octx.fillText(t,pos.x+10,pos.y-10);
+      tl.dot=[pos.x,pos.y];
+    }
   }
 }
-function lastPt(p,m,n){const [x1,y1]=XY(p[(m-1)*3],p[(m-1)*3+1]);if(m>=n)return [x1,y1];const [x2,y2]=XY(p[m*3],p[m*3+1]);const f=Math.max(0,Math.min(1,n*tl.prog-(m-1)));return [x1+(x2-x1)*f,y1+(y2-y1)*f]}
-const slider=$('#slider');let cum=[];
-function tlLabel(){const [d,,km]=R.tl[tl.i];$('#pd').textContent=fmtDayY(d);$('#pk').textContent=nf.format(km)+' km · gesamt '+nf.format(cum[tl.i])+' km';slider.value=tl.i}
-function setPlay(on){tl.play=on;$('#pic').setAttribute('d',on?'M3 1.5h3v11H3zM8 1.5h3v11H8z':'M3 1.5v11l9-5.5z')}
-let last=0;
-function frame(now){
-  if(!tl.play)return;const dt=Math.min(64,now-last);last=now;
-  const n=R.tl[tl.i][1].length/3;const dur=(n>20?1600:300)/tl.speed;tl.prog+=dt/dur;
-  if(tl.prog>=1){if(tl.i>=R.tl.length-1){tl.prog=1;setPlay(false);drawOver();return}tl.i++;tl.prog=0;tlLabel()}
-  drawOver();requestAnimationFrame(frame);
+// Lücke in den Daten (z. B. Flug, GPS aus): nicht mit einer Linie verbinden
+function jump(p,j){const dl=Math.abs(p[j*3]-p[(j-1)*3])+Math.abs(p[j*3+1]-p[(j-1)*3+1]),dt=p[j*3+2]-p[(j-1)*3+2];return dl>0.6&&dl/Math.max(1,dt)>0.03}
+// Position im Tagesverlauf nach Uhrzeit (Stehzeiten = Punkt bleibt stehen)
+function posAt(p,n,prog){
+  const t0=p[2],t1=p[(n-1)*3+2],min=t0+(t1-t0)*Math.max(0,Math.min(1,prog));
+  let j=0;while(j<n-1&&p[(j+1)*3+2]<=min)j++;
+  const [x1,y1]=XY(p[j*3],p[j*3+1]);
+  if(j>=n-1)return{j,x:x1,y:y1,min};
+  const [x2,y2]=XY(p[(j+1)*3],p[(j+1)*3+1]);const a=p[j*3+2],b=p[(j+1)*3+2];const f=b>a?(min-a)/(b-a):1;
+  return{j,x:x1+(x2-x1)*f,y:y1+(y2-y1)*f,min};
 }
-$('#play').onclick=()=>{if(!R)return;if(!tl.on){tl.on=true;redraw()}
+const slider=$('#slider');let cum=[],raf=0,last=0;
+function tlLabel(){const [d,,km]=R.tl[tl.i];$('#pd').textContent=fmtDayY(d);$('#pk').textContent=nf.format(km)+' km · gesamt '+nf.format(cum[tl.i])+' km';slider.value=tl.i}
+function setPlay(on){tl.play=on;$('#pic').setAttribute('d',on?'M3 1.5h3v11H3zM8 1.5h3v11H8z':'M3 1.5v11l9-5.5z');$('#play').setAttribute('aria-label',on?'Pause':'Abspielen')}
+function setOn(on){tl.on=on;$('#tlclose').classList.toggle('hidden',!on);if(!on){setPlay(false);$('#pd').textContent='Zeitleiste';$('#pk').textContent='Tag für Tag abspielen'}redraw();drawOver()}
+function follow(){ // Punkt im Blick behalten
+  if(!tl.dot)return;const [x,y]=tl.dot,m=50;
+  if(x<m||y<m+50||x>W-m||y>H-m-70)d3.select(cv).call(zoom.translateBy,(W/2-x)/T.k,(H/2-y)/T.k);
+}
+function frame(now){
+  raf=0;if(!tl.play)return;
+  const dt=Math.min(64,now-last);last=now;
+  const n=R.tl[tl.i][1].length/3;const dur=(n>20?2200:400)/tl.speed;tl.prog+=dt/dur;
+  if(tl.prog>=1){if(tl.i>=R.tl.length-1){tl.prog=1;setPlay(false);drawOver();return}tl.i++;tl.prog=0;tlLabel()}
+  drawOver();follow();raf=requestAnimationFrame(frame);
+}
+function startLoop(){if(!raf){last=performance.now();raf=requestAnimationFrame(frame)}}
+$('#play').onclick=()=>{if(!R||!R.tl.length)return;if(!tl.on)setOn(true);
   if(tl.play){setPlay(false);return}
-  if(tl.i>=R.tl.length-1&&tl.prog>=1)tl.i=0;if(tl.prog>=1)tl.prog=0;tlLabel();setPlay(true);last=performance.now();requestAnimationFrame(frame)};
-slider.oninput=()=>{if(!tl.on){tl.on=true;redraw()}tl.i=+slider.value;tl.prog=1;tlLabel();drawOver()};
-const SPEEDS=[1,3,8];$('#speed').onclick=e=>{tl.speed=SPEEDS[(SPEEDS.indexOf(tl.speed)+1)%3];e.target.textContent=tl.speed+'×'};
+  if(tl.i>=R.tl.length-1&&tl.prog>=1)tl.i=0;if(tl.prog>=1)tl.prog=0;tlLabel();setPlay(true);startLoop()};
+slider.addEventListener('pointerdown',()=>{if(tl.play)setPlay(false)});
+slider.oninput=()=>{if(!R)return;if(tl.play)setPlay(false);if(!tl.on)setOn(true);tl.i=+slider.value;tl.prog=1;tlLabel();drawOver();follow()};
+$('#tlclose').onclick=()=>setOn(false);
+const SPEEDS=[1,4,12,30];$('#speed').onclick=e=>{tl.speed=SPEEDS[(SPEEDS.indexOf(tl.speed)+1)%SPEEDS.length];e.currentTarget.textContent=tl.speed+'×'};
+document.addEventListener('keydown',e=>{if(!R||$('#app').classList.contains('hidden')||/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName))return;
+  if(e.code==='Space'){e.preventDefault();$('#play').click()}
+  else if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();if(!tl.on)setOn(true);if(tl.play)setPlay(false);tl.i=Math.max(0,Math.min(R.tl.length-1,tl.i+(e.key==='ArrowRight'?1:-1)));tl.prog=1;tlLabel();drawOver();follow()}
+  else if(e.key==='Escape'&&tl.on)setOn(false)});
 
 /* ---------- Bedienelemente ---------- */
 function segBind(sel,attr,cb){$$(sel+' button').forEach(b=>b.onclick=()=>{$$(sel+' button').forEach(x=>x.classList.remove('on'));b.classList.add('on');cb(b.dataset[attr])})}
+segBind('#style','s',v=>setStyle(v));
 segBind('#kind','k',v=>{st.kind=v;renderHeat();redraw()});
 $('#month').onchange=e=>{st.month=e.target.value;renderHeat();redraw()};
 $$('#layers button').forEach(b=>b.onclick=()=>{const l=b.dataset.l;st.layers[l]=!st.layers[l];b.classList.toggle('on',st.layers[l]);$('#pop').style.display='none';redraw()});
 $$('#tabs button').forEach(b=>b.onclick=()=>{$$('#tabs button').forEach(x=>x.classList.remove('on'));b.classList.add('on');$$('.pane').forEach(p=>p.classList.toggle('on',p.id==='p-'+b.dataset.t))});
 segBind('#sitef','f',v=>{st.siteF=v;renderSites()});
-$$('[data-pick]').forEach(b=>b.onclick=()=>{st.pick=b.dataset.pick;$('#pickhint').style.display='block';card.scrollIntoView({behavior:'smooth',block:'center'})});
-$('#workAuto').onclick=()=>{settings.work=null;LS.set('zeitachse.settings',settings);recompute()};
-$('#apply').onclick=()=>{settings.freeText=$('#free').value;settings.holidays=$('#hol').checked;LS.set('zeitachse.settings',settings);$('#applied').textContent='Wird neu berechnet …';recompute()};
-$('#gofree').onclick=e=>{e.preventDefault();$('#tabs [data-t=settings]').click();$('#free').focus();$('#free').scrollIntoView({behavior:'smooth',block:'center'})};
-function markFree(d){settings.freeText=((settings.freeText||'').trim()+'\n'+d).trim();LS.set('zeitachse.settings',settings);$('#free').value=settings.freeText;recompute()}
+segBind('#tourf','f',v=>{st.tourF=v;renderTours()});
+$('#pickhint').onclick=()=>{st.pick=null;$('#pickhint').style.display='none'};
+$$('[data-pick]').forEach(b=>b.onclick=()=>{st.pick=b.dataset.pick;if(st.pick==='work'){settings.noWork=false;$('#nowork').checked=false}$('#pickhint').style.display='block';card.scrollIntoView({behavior:'smooth',block:'center'})});
+$('#workAuto').onclick=()=>{settings.work=null;LS.set(SKEY(),settings);recompute()};
+$('#apply').onclick=()=>{settings.freeText=$('#free').value;settings.noWork=$('#nowork').checked;settings.region=$('#region').value;settings.awayKm=+$('#awaykm').value||40;settings.workDays=$$('#wdays button.on').map(b=>+b.dataset.d);LS.set(SKEY(),settings);$('#applied').textContent='Wird neu berechnet …';recompute()};
+function goFree(e){e.preventDefault();$('#tabs [data-t=settings]').click();$('#free').focus();$('#free').scrollIntoView({behavior:'smooth',block:'center'})}
+function markFree(d){settings.freeText=((settings.freeText||'').trim()+'\n'+d).trim();LS.set(SKEY(),settings);$('#free').value=settings.freeText;recompute()}
 $('#forget').onclick=async()=>{await forgetFile();$('#forget').textContent='Gelöscht'};
 
 /* ---------- Ergebnis anzeigen ---------- */
@@ -460,33 +586,106 @@ function onResult(){
   if(st.month!=='all'&&+st.month>=R.months.length)st.month='all';ms.value=st.month;
   let c=0;cum=R.tl.map(t=>c+=t[2]);slider.max=R.tl.length-1;tl.i=Math.min(tl.i,R.tl.length-1);
   $('#cHome').textContent=R.home.map(v=>v.toFixed(4)).join(', ');
-  $('#cWork').textContent=R.work?R.work.map(v=>v.toFixed(4)).join(', ')+(R.workAuto?' (automatisch erkannt)':''):'nicht erkannt';
-  $('#free').value=settings.freeText||'';$('#hol').checked=settings.holidays!==false;
-  $('#freehint').classList.toggle('hidden',!!(settings.freeText||'').trim());
+  $('#cWork').textContent=settings.noWork?'keine (direkt von daheim)':R.work?R.work.map(v=>v.toFixed(4)).join(', ')+(R.workAuto?' (automatisch erkannt)':''):'nicht erkannt';
+  $('#free').value=settings.freeText||'';$('#nowork').checked=!!settings.noWork;$('#region').value=settings.region||'auto';$('#awaykm').value=settings.awayKm||40;
+  const RN={'IT-BZ':'Italien – Südtirol','IT':'Italien','AT':'Österreich','DE':'Deutschland','DE-BY':'Bayern','DE-BW':'Baden-Württemberg','CH':'Schweiz','none':'keine'};
+  $('#regionInfo').textContent=R.regionAuto?'erkannt: '+RN[R.region]:'';
+  const wd=settings.workDays||[1,2,3,4,5];$('#wdays').innerHTML=[1,2,3,4,5,6,0].map(d=>`<button data-d="${d}" class="${wd.includes(d)?'on':''}">${WD[d]}</button>`).join('');
+  $$('#wdays button').forEach(b=>b.onclick=()=>b.classList.toggle('on'));
+  const nCheck=R.tours.filter(t=>t.check).length;
+  const fh=$('#freehint');
+  if(nCheck){fh.innerHTML=`${nCheck} Tour${nCheck>1?'en sehen':' sieht'} nach Urlaub aus und ${nCheck>1?'zählen':'zählt'} gerade als Arbeit. <a href="#" id="gotours">Prüfen</a>`;fh.classList.remove('hidden');$('#gotours').onclick=e=>{e.preventDefault();$('#tabs [data-t=tours]').click();$('#tourf [data-f=check]').click();$('#tabs').scrollIntoView({behavior:'smooth'})}}
+  else if(!(settings.freeText||'').trim()){fh.innerHTML='Noch kein Urlaub eingetragen – Urlaubsfahrten an Arbeitstagen zählen sonst als Arbeit. <a href="#" id="gofree">Jetzt eintragen</a>';fh.classList.remove('hidden');$('#gofree').onclick=goFree}
+  else fh.classList.add('hidden');
   const first=!W;resize();if(first)T=d3.zoomIdentity;renderTables();
 }
-function renderTables(){if(!R)return;renderSites();renderDiary();renderHotels();renderMonths();
-  if(R.work)$('#cWork').textContent=placeName(R.work[0],R.work[1])+' · '+R.work.map(v=>v.toFixed(4)).join(', ')+(R.workAuto?' (automatisch erkannt)':'');
+function renderTables(){if(!R)return;renderSites();renderTours();renderDiary();renderHotels();renderMonths();
+  if(R.work&&!settings.noWork)$('#cWork').textContent=placeName(R.work[0],R.work[1])+' · '+R.work.map(v=>v.toFixed(4)).join(', ')+(R.workAuto?' (automatisch erkannt)':'');
   $('#cHome').textContent=placeName(R.home[0],R.home[1])+' · '+R.home.map(v=>v.toFixed(4)).join(', ')}
 function renderSites(){
   const list=R.sites.filter(s=>st.siteF==='all'||s.kmWork>50).slice(0,25),mh=list[0]?.hours||1;
-  $('#tSites').innerHTML=list.map((s,i)=>`<tr class="click" data-i="${R.sites.indexOf(s)}"><td class="rk">${i+1}</td><td><div>${placeName(s.lat,s.lon)}</div><div class="m">${s.kmWork} km von der Firma · ${fmtDayY(s.days[0][0])}${s.days.length>1?' – '+fmtDayY(s.days[s.days.length-1][0]):''}</div><div class="meter"><div style="width:${s.hours/mh*100}%"></div></div></td><td class="num">${nf.format(s.hours)}</td><td class="num">${s.days.length}</td></tr>`).join('')||'<tr><td colspan="4" class="m">Keine Einsatzorte gefunden.</td></tr>';
+  $('#tSites').innerHTML=list.map((s,i)=>`<tr class="click" data-i="${R.sites.indexOf(s)}"><td class="rk">${i+1}</td><td><div>${placeName(s.lat,s.lon)}</div><div class="m">${s.kmWork} km ${R.work&&!settings.noWork?'von der Firma':'von daheim'} · ${fmtDayY(s.days[0][0])}${s.days.length>1?' – '+fmtDayY(s.days[s.days.length-1][0]):''}</div><div class="meter"><div style="width:${s.hours/mh*100}%"></div></div></td><td class="num">${nf.format(s.hours)}</td><td class="num">${s.days.length}</td></tr>`).join('')||'<tr><td colspan="4" class="m">Keine Einsatzorte gefunden.</td></tr>';
   $$('#tSites tr.click').forEach(tr=>tr.onclick=()=>{const s=R.sites[+tr.dataset.i];if(!st.layers.sites)$('#layers [data-l=sites]').click();flyTo(s.lat,s.lon,s.kmWork<20?30:10)});
+}
+function renderTours(){
+  const HOW={F:'ab Firma',H:'direkt von daheim',E:'am Vorabend los',O:'ab Übernachtung'};
+  const list=R.tours.filter(t=>st.tourF==='all'||t.check).slice().reverse();
+  $('#tTours').innerHTML=list.map(t=>`<tr${t.check?' style="background:#fff7e6"':''}><td><div>${fmtDayY(t.from)}${t.to!==t.from?' – '+fmtDayY(t.to):''}</div><div class="m">${HOW[t.how]}${t.check?' · <b style="color:#7a4b00">Urlaub?</b>':''}</div></td><td><div>${t.far>3?placeName(t.farP[0],t.farP[1]):'in der Nähe'}</div><div class="m">${t.far} km von daheim</div>${t.check?`<button class="free-btn" data-from="${t.from}" data-to="${t.to}">war frei</button> <button class="free-btn" data-ok="${t.from}">war Arbeit</button>`:''}</td><td class="num">${nf.format(t.km)}</td></tr>`).join('')||'<tr><td colspan="3" class="m">Nichts zu prüfen.</td></tr>';
+  $$('#tTours [data-ok]').forEach(b=>b.onclick=()=>{b.textContent='…';settings.ok=[...(settings.ok||[]),b.dataset.ok];LS.set(SKEY(),settings);recompute()});
+  $$('#tTours [data-from]').forEach(b=>b.onclick=()=>{b.textContent='…';markFree(b.dataset.from===b.dataset.to?b.dataset.from:b.dataset.from+' bis '+b.dataset.to)});
 }
 function renderDiary(){
   const by={};R.sites.forEach(s=>s.days.forEach(([d,h])=>(by[d]||=[]).push([placeName(s.lat,s.lon),h])));
-  const hotel={};R.hotels.forEach(h=>h.work&&h.nights.forEach(n=>hotel[n]=placeName(h.lat,h.lon)));
+  const hotel={};R.hotels.forEach(h=>h.work&&h.nights.forEach(n=>hotel[n]=esc(hDisplay(h))||placeName(h.lat,h.lon)));
   const km=R.stats.kmWorkDay||{};
   const mons={};Object.keys(by).sort().forEach(d=>(mons[d.slice(0,7)]||=[]).push(d));
   const hfmt=h=>h<1?Math.round(h*60)+' min':(Math.round(h*2)/2).toString().replace('.',',')+' h';
-  $('#diary').innerHTML=Object.keys(mons).sort().reverse().map((m,i)=>`<details${i===0?' open':''}><summary>${MON[+m.slice(5)-1]} ${m.slice(0,4)}<span>${mons[m].length} Tage</span></summary>${mons[m].map(d=>`<div class="drow"><span class="d">${fmtDay(d)}</span><div>${by[d].sort((a,b)=>b[1]-a[1]).map(([o,h])=>`<span class="pill">${o} · ${hfmt(h)}</span>`).join('')}${hotel[d]?`<span class="pill h">Hotel ${hotel[d]}</span>`:''}</div><span class="m" style="text-align:right">${nf.format(km[d]||0)} km<br><button class="free-btn" data-free="${d}">war frei</button></span></div>`).join('')}</details>`).join('')||'<p class="m">Noch keine Einträge.</p>';
+  const open=new Set($$('#diary details[open]').map(d=>d.dataset.m));const firstRender=!$('#diary details');
+  $('#diary').innerHTML=Object.keys(mons).sort().reverse().map((m,i)=>`<details data-m="${m}"${(firstRender?i===0:open.has(m))?' open':''}><summary>${MON[+m.slice(5)-1]} ${m.slice(0,4)}<span>${mons[m].length} Tage</span></summary>${mons[m].map(d=>`<div class="drow"><span class="d">${fmtDay(d)}</span><div>${by[d].sort((a,b)=>b[1]-a[1]).map(([o,h])=>`<span class="pill">${o} · ${hfmt(h)}</span>`).join('')}${hotel[d]?`<span class="pill h">Hotel ${hotel[d]}</span>`:''}</div><span class="m" style="text-align:right">${nf.format(km[d]||0)} km<br><button class="free-btn" data-free="${d}">war frei</button></span></div>`).join('')}</details>`).join('')||'<p class="m">Noch keine Einträge.</p>';
   $$('#diary [data-free]').forEach(b=>b.onclick=e=>{e.preventDefault();b.textContent='…';markFree(b.dataset.free)});
 }
+/* Hotel-Notizen: pro Unterkunft (Google-Place-ID bzw. Koordinaten) im Browser gespeichert */
+let notes=LS.get('zeitachse.hotels',{});
+const hkey=h=>h.pid||(h.lat.toFixed(3)+','+h.lon.toFixed(3));
+const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
+const hDisplay=h=>{const n=notes[hkey(h)]||{};return n.name||n.gname||''};
+const mapsUrl=h=>`https://www.google.com/maps/search/?api=1&query=${h.lat},${h.lon}`+(h.pid?`&query_place_id=${encodeURIComponent(h.pid)}`:'');
 function renderHotels(){
   const list=R.hotels.filter(h=>h.work);
-  $('#tHotels').innerHTML=list.map(h=>`<tr class="click" data-la="${h.lat}" data-lo="${h.lon}"><td>${placeName(h.lat,h.lon)}</td><td class="m">${h.nights.map(fmtDay).join(', ')}</td><td class="num">${h.work}</td></tr>`).join('')+`<tr><td colspan="2"><b>Gesamt</b></td><td class="num"><b>${list.reduce((a,h)=>a+h.work,0)}</b></td></tr>`;
-  $$('#tHotels tr.click').forEach(tr=>tr.onclick=()=>{if(!st.layers.hotels)$('#layers [data-l=hotels]').click();flyTo(+tr.dataset.la,+tr.dataset.lo,10)});
+  const total=list.reduce((a,h)=>a+h.work,0);
+  $('#tHotels').innerHTML=list.map((h,i)=>{const n=notes[hkey(h)]||{};const town=placeName(h.lat,h.lon);
+    return `<div class="hotel" data-i="${i}">
+      <div class="hrow"><div><input class="hname" placeholder="${esc(n.gname||'Name eintragen ('+town+')')}" value="${esc(n.name)}">${n.gaddr?`<div class="gname">${esc(n.gaddr)}${n.grating?' · Google '+String(n.grating).replace('.',',')+' ★':''}</div>`:''}<div class="m">${town} · ${h.work} ${h.work>1?'Nächte':'Nacht'} · ${h.nights.slice(0,8).map(fmtDayY).join(', ')}${h.nights.length>8?' …':''}</div></div>
+      <div class="stars">${[1,2,3,4,5].map(k=>`<button data-k="${k}" class="${(n.stars||0)>=k?'on':''}" aria-label="${k} Sterne">★</button>`).join('')}</div></div>
+      <textarea class="hnote" rows="1" placeholder="Notiz: Parkplatz für den Bus? Frühstück? Wieder hin?">${esc(n.note)}</textarea>
+      <div class="hlinks"><a href="${esc(n.guri||mapsUrl(h))}" target="_blank" rel="noopener">In Maps öffnen</a><a href="#" data-fly>Auf der Karte</a></div>
+    </div>`}).join('')+`<div class="m" style="padding:10px 2px">Gesamt ${total} Hotelnächte für die Arbeit.</div>`;
+  $$('#tHotels .hotel').forEach(el=>{const h=list[+el.dataset.i],k=hkey(h);
+    const save=()=>{notes[k]={...(notes[k]||{}),name:el.querySelector('.hname').value.trim(),note:el.querySelector('.hnote').value.trim()};LS.set('zeitachse.hotels',notes)};
+    let tm=0;const later=()=>{clearTimeout(tm);tm=setTimeout(save,400)};
+    el.querySelector('.hname').oninput=later;el.querySelector('.hnote').oninput=later;el.querySelector('.hname').onchange=save;el.querySelector('.hnote').onchange=save;
+    el.querySelectorAll('.stars button').forEach(b=>b.onclick=()=>{const v=+b.dataset.k;notes[k]={...(notes[k]||{}),stars:(notes[k]?.stars===v?0:v)};LS.set('zeitachse.hotels',notes);el.querySelectorAll('.stars button').forEach(x=>x.classList.toggle('on',+x.dataset.k<=(notes[k].stars||0)))});
+    el.querySelector('[data-fly]').onclick=e=>{e.preventDefault();if(!st.layers.hotels)$('#layers [data-l=hotels]').click();flyTo(h.lat,h.lon,12)};
+  });
 }
+/* Hotelnamen über die Google Places API (Maps JavaScript API, Place-Klasse) */
+const GK='zeitachse.gkey';
+function loadMapsJs(key){
+  if(window.google?.maps?.importLibrary)return Promise.resolve();
+  return new Promise((res,rej)=>{
+    window.__gmAuthFail=()=>rej(new Error('Schlüssel abgelehnt (gm_authFailure) – Einschränkungen/aktivierte APIs prüfen'));
+    window.gm_authFailure=()=>window.__gmAuthFail();
+    const sc=document.createElement('script');
+    sc.src=`https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&v=weekly&language=de&loading=async&callback=__gmReady`;
+    window.__gmReady=()=>res();sc.onerror=()=>rej(new Error('Google Maps konnte nicht geladen werden (blockiert oder offline)'));
+    document.head.appendChild(sc);
+  });
+}
+async function fetchHotelNames(){
+  const key=LS.get(GK,'');const out=$('#gstatus');
+  if(!key){out.textContent='Zuerst unter Einstellungen einen Google-API-Schlüssel eintragen.';return}
+  const list=R.hotels.filter(h=>h.work&&h.pid&&!(notes[hkey(h)]||{}).gname);
+  if(!list.length){out.textContent='Alle Hotels haben schon einen Namen.';return}
+  try{
+    out.textContent='Google wird geladen …';await loadMapsJs(key);
+    const {Place}=await google.maps.importLibrary('places');
+    let ok=0,fail=0,lastErr='';
+    for(const h of list){
+      out.textContent=`Hole Namen … ${ok+fail+1}/${list.length}`;
+      try{
+        const p=new Place({id:h.pid,requestedLanguage:'de'});
+        await p.fetchFields({fields:['displayName','formattedAddress','rating','googleMapsURI']});
+        const k=hkey(h);notes[k]={...(notes[k]||{}),gname:p.displayName||'',gaddr:p.formattedAddress||'',grating:p.rating||null,guri:p.googleMapsURI||''};ok++;
+      }catch(e){fail++;lastErr=e.message||String(e)}
+      await new Promise(r=>setTimeout(r,120));
+    }
+    LS.set('zeitachse.hotels',notes);renderHotels();renderDiary();redraw();
+    out.textContent=`${ok} Namen geholt`+(fail?`, ${fail} fehlgeschlagen (${lastErr.slice(0,120)})`:'');
+  }catch(e){out.textContent='Fehler: '+(e.message||e)}
+}
+$('#gfetch').onclick=fetchHotelNames;
+$('#gsave').onclick=()=>{LS.set(GK,$('#gkey').value.trim());$('#gsave').textContent='Gespeichert';setTimeout(()=>$('#gsave').textContent='Speichern',1500)};
+$('#gkey').value=LS.get(GK,'');
 function renderMonths(){
   const s=R.stats,ms=Object.keys(s.kmMonth).sort();
   $('#tMonths').innerHTML=ms.map(m=>`<tr><td>${MON[+m.slice(5)-1]} ${m.slice(0,4)}</td><td class="num">${nf.format(s.kmMonth[m])}</td><td class="num">${nf.format(s.kmWorkMonth[m]||0)}</td></tr>`).join('')+`<tr><td><b>Gesamt</b></td><td class="num"><b>${nf.format(s.kmCar)}</b></td><td class="num"><b>${nf.format(s.kmWork)}</b></td></tr>`;

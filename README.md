@@ -26,9 +26,13 @@ Die Datei (`Zeitachse.json` / `Timeline.json`) dann auf der Seite auswählen ode
   oder morgens direkt von daheim zur Baustelle (bzw. am Vorabend weit weg ins Hotel).
 - Sie endet, sobald man wieder in der Firma oder daheim ist. Fahrten danach zählen nicht.
 - Der Weg daheim ↔ Firma zählt nie. Mehrtägige Touren mit Hotel laufen bis zur Rückkehr durch.
-- Wochenenden, gesetzliche Feiertage (Italien + Pfingstmontag) und eingetragene freie Tage zählen nicht.
+- Nur Arbeitstage zählen (einstellbar, Standard Mo–Fr). Gesetzliche Feiertage werden nach Wohnort erkannt
+  (Südtirol, Italien, Österreich, Deutschland/Bayern/BW, Schweiz) und zählen nicht – genauso wie eingetragene freie Tage.
+- **Touren-Check:** Touren, die nicht in der Firma starten und weit weg gehen, werden als „Urlaub?“ markiert.
+  Mit einem Tipp als „war frei“ oder „war Arbeit“ bestätigen.
+- **Ohne Firma:** Wer immer direkt von daheim startet, setzt in den Einstellungen „Keine Firma“.
 - **Einsatzorte** = Aufenthalte während einer Tour zwischen 6 und 20 Uhr, ab 3 Std insgesamt.
-- **Hotelnächte** = Nächte über 40 km von daheim mitten in einer Arbeitstour.
+- **Hotelnächte** = Nächte auswärts (Standard ab 40 km, einstellbar) mitten in einer Arbeitstour.
 
 ## Einstellungen
 
@@ -39,6 +43,18 @@ Die Datei (`Zeitachse.json` / `Timeline.json`) dann auf der Seite auswählen ode
   2025-12-24 bis 2026-01-06
   2026-08-15 bis 2026-08-22
   ```
+
+## Hotelnamen (optional)
+
+Der Export enthält nur Google-Place-IDs, keine Namen. Mit einem eigenen Google-API-Schlüssel
+holt die Seite die Namen, Adresse und Bewertung der Hotels (Tab *Hotels → Hotelnamen von Google holen*).
+
+1. console.cloud.google.com → Projekt anlegen, Abrechnung verbinden
+2. **Maps JavaScript API** und **Places API (New)** aktivieren
+3. API-Schlüssel erstellen und auf die eigene Seite (`https://<name>.github.io/*`) und diese zwei APIs einschränken
+4. Schlüssel unter *Einstellungen* eintragen – er bleibt nur im Browser
+
+Für ein paar Dutzend Hotels bleibt man im Gratis-Kontingent von Google. Namen werden gespeichert und nur einmal abgefragt.
 
 ## Online stellen (GitHub Pages)
 
@@ -58,5 +74,7 @@ Lokal testen: `python3 -m http.server` im Ordner und `http://localhost:8000` öf
 | `data/strassen.json` | Autobahnen, Hauptstraßen, Seen (Natural Earth) |
 | `data/staedte.json` | Städtenamen für die Karte (Natural Earth) |
 | `data/orte.json` | Ortsnamen für Einsatzorte (GeoNames, CC BY 4.0) |
+
+Die Detailkarte („Karte“) lädt Kacheln von CARTO (Daten © OpenStreetMap-Mitwirkende). Ohne Internet oder wo das blockiert ist, wird automatisch die einfache Karte genommen.
 
 Kilometer sind Googles Schätzung – kein Ersatz für ein Fahrtenbuch.

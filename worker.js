@@ -1,6 +1,19 @@
 // Analysiert einen Google-Maps-Zeitachsen-Export (Timeline.json vom Handy).
 // Läuft komplett im Browser – die Datei verlässt das Gerät nicht.
-let RAW = null;
+let RAW = null, GAZ = null;
+async function countryOf(p) {
+  if (!GAZ) { try { GAZ = await (await fetch('data/orte.json')).json(); } catch { GAZ = []; } }
+  let best = null, bd = 1e9;
+  for (const x of GAZ) { const d = (x[0] - p[0]) ** 2 + (x[1] - p[1]) ** 2; if (d < bd) { bd = d; best = x; } }
+  return best ? best[3] : null;
+}
+async function autoRegion(p) {
+  const c = await countryOf(p);
+  if (c === 'IT') return p[0] > 46.2 && p[0] < 47.1 && p[1] > 10.3 && p[1] < 12.5 ? 'IT-BZ' : 'IT';
+  if (c === 'DE') return p[1] > 9.9 && p[0] < 50.6 ? 'DE-BY' : p[1] < 9.9 && p[0] < 49.8 ? 'DE-BW' : 'DE';
+  if (c === 'AT' || c === 'CH') return c;
+  return 'none';
+}
 
 const R = 6371;
 const rad = d => d * Math.PI / 180;
@@ -18,7 +31,8 @@ function ll(s) {
 const dayOf = iso => iso.slice(0, 10);
 const minOf = iso => (+iso.slice(11, 13)) * 60 + (+iso.slice(14, 16));
 function weekday(day) { return new Date(day + 'T12:00:00Z').getUTCDay(); } // 0 = So
-const isWeekday = day => { const w = weekday(day); return w >= 1 && w <= 5; };
+let WORKDAYS = new Set([1, 2, 3, 4, 5]);
+const isWeekday = day => WORKDAYS.has(weekday(day));
 function addDays(day, n) { const d = new Date(day + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
 
 function normalize(json) {
@@ -28,7 +42,7 @@ function normalize(json) {
   if (Array.isArray(json)) {
     const segs = json.map(e => {
       const s = { startTime: e.startTime, endTime: e.endTime };
-      if (e.visit) s.visit = { topCandidate: { semanticType: e.visit.topCandidate?.semanticType, placeLocation: { latLng: (e.visit.topCandidate?.placeLocation || '').replace('geo:', '') } } };
+      if (e.visit) s.visit = { topCandidate: { semanticType: String(e.visit.topCandidate?.semanticType || '').toUpperCase(), placeId: e.visit.topCandidate?.placeID || e.visit.topCandidate?.placeId, placeLocation: { latLng: (e.visit.topCandidate?.placeLocation || '').replace('geo:', '') } } };
       if (e.activity) s.activity = { start: { latLng: (e.activity.start || '').replace('geo:', '') }, end: { latLng: (e.activity.end || '').replace('geo:', '') }, distanceMeters: +e.activity.distanceMeters || 0, topCandidate: { type: (e.activity.topCandidate?.type || '').toUpperCase().replace('IN PASSENGER VEHICLE', 'IN_PASSENGER_VEHICLE') } };
       if (e.timelinePath) s.timelinePath = e.timelinePath.map(p => ({ point: (p.point || '').replace('geo:', ''), time: addMinutes(e.startTime, +p.durationMinutesOffsetFromStartTime || 0) }));
       return s;
@@ -44,8 +58,6 @@ function addMinutes(iso, m) {
 }
 function tzMs(off) { const m = /([+-])(\d\d):?(\d\d)/.exec(off); return m ? (m[1] === '-' ? -1 : 1) * (+m[2] * 60 + +m[3]) * 60000 : 0; }
 
-function firstYear(segs) { return (segs[0]?.startTime || '2026').slice(0, 4); }
-function lastYear(segs) { return (segs[segs.length - 1]?.endTime || '2026').slice(0, 4); }
 // Gesetzliche Feiertage Italien + Pfingstmontag (Südtirol)
 function easter(y) {
   const a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25),
@@ -54,11 +66,22 @@ function easter(y) {
     mo = Math.floor((h + l - 7 * m + 114) / 31), da = ((h + l - 7 * m + 114) % 31) + 1;
   return `${y}-${String(mo).padStart(2, '0')}-${String(da).padStart(2, '0')}`;
 }
-function holidays(y0, y1) {
+// Gesetzliche Feiertage je Land/Region. Zahlen = Tage relativ zu Ostersonntag.
+const HOLIDAYS = {
+  'IT':    { fix: ['01-01', '01-06', '04-25', '05-01', '06-02', '08-15', '11-01', '12-08', '12-25', '12-26'], easter: [1] },
+  'IT-BZ': { fix: ['01-01', '01-06', '04-25', '05-01', '06-02', '08-15', '11-01', '12-08', '12-25', '12-26'], easter: [1, 50] },
+  'AT':    { fix: ['01-01', '01-06', '05-01', '08-15', '10-26', '11-01', '12-08', '12-25', '12-26'], easter: [1, 39, 50, 60] },
+  'DE':    { fix: ['01-01', '05-01', '10-03', '12-25', '12-26'], easter: [-2, 1, 39, 50] },
+  'DE-BY': { fix: ['01-01', '01-06', '05-01', '08-15', '10-03', '11-01', '12-25', '12-26'], easter: [-2, 1, 39, 50, 60] },
+  'DE-BW': { fix: ['01-01', '01-06', '05-01', '10-03', '11-01', '12-25', '12-26'], easter: [-2, 1, 39, 50, 60] },
+  'CH':    { fix: ['01-01', '01-02', '08-01', '12-25', '12-26'], easter: [-2, 1, 39, 50] },
+};
+function holidays(region, y0, y1) {
+  const h = HOLIDAYS[region]; if (!h) return [];
   const out = [];
-  for (let y = Math.min(y0, y1); y <= Math.max(y0, y1); y++) {
-    for (const md of ['01-01', '01-06', '04-25', '05-01', '06-02', '08-15', '11-01', '12-08', '12-25', '12-26']) out.push(`${y}-${md}`);
-    const e = easter(y); out.push(addDays(e, 1), addDays(e, 50));
+  for (let y = y0; y <= y1; y++) {
+    for (const md of h.fix) out.push(`${y}-${md}`);
+    const e = easter(y); for (const n of h.easter) out.push(addDays(e, n));
   }
   return out;
 }
@@ -75,6 +98,9 @@ function cluster(items, r) {
 
 function analyse(opts) {
   const { segs, profile } = RAW;
+  WORKDAYS = new Set(opts.workDays && opts.workDays.length ? opts.workDays : [1, 2, 3, 4, 5]);
+  const AWAY = +opts.awayKm || 40; // ab dieser Entfernung zählt eine Nacht als auswärts
+  let y0 = 9999, y1 = 0; for (const s of segs) { const y = +String(s.startTime).slice(0, 4); if (y < y0) y0 = y; if (y > y1) y1 = y; }
   const CAR = 'IN_PASSENGER_VEHICLE';
 
   // --- Daheim ---
@@ -87,7 +113,7 @@ function analyse(opts) {
   for (const s of segs) {
     const v = s.visit; if (!v) continue;
     const p = ll(v.topCandidate?.placeLocation?.latLng); if (!p || isNaN(p[0])) continue;
-    visits.push({ st: s.startTime, en: s.endTime, p, type: v.topCandidate.semanticType });
+    visits.push({ st: s.startTime, en: s.endTime, p, type: v.topCandidate.semanticType, pid: v.topCandidate.placeId || null });
   }
   if (!home) {
     const hv = visits.filter(v => v.type === 'HOME');
@@ -96,8 +122,8 @@ function analyse(opts) {
   }
 
   // --- Firma: häufigster Wochentags-Halt morgens, nahe daheim ---
-  let work = opts.work, workAuto = false;
-  if (!work) {
+  let work = opts.noWork ? null : opts.work, workAuto = false;
+  if (!work && !opts.noWork) {
     const cand = visits.filter(v => isWeekday(dayOf(v.st)) && minOf(v.st) >= 300 && minOf(v.st) <= 600 && dist(v.p, home) > 1 && dist(v.p, home) < 60)
       .map(v => ({ p: v.p, d: dayOf(v.st) }));
     const cl = cluster(cand, 0.6).map(c => ({ p: c.p, n: new Set(c.items.map(i => i.d)).size })).sort((a, b) => b.n - a.n);
@@ -105,7 +131,8 @@ function analyse(opts) {
   }
 
   const free = new Set(opts.free || []);
-  if (opts.holidays !== false) for (const d of holidays(+firstYear(segs), +lastYear(segs))) free.add(d);
+  const region = opts.region || 'none';
+  for (const d of holidays(region, y0, y1)) free.add(d);
   const isFree = day => free.has(day);
   const near = p => dist(p, home) < 2 || (work && dist(p, work) < 1.5);
 
@@ -142,28 +169,31 @@ function analyse(opts) {
   // Übernachtungsort je Nacht (für "fährt am Vorabend ins Hotel")
   const sleepAway = new Set();
   for (const v of visits) {
-    if (dist(v.p, home) < 40) continue;
+    if (dist(v.p, home) < AWAY) continue;
     let d = dayOf(v.st);
     for (let i = 0; i < 30 && d <= dayOf(v.en); i++, d = addDays(d, 1)) {
       if (d + 'T03:00' >= v.st.slice(0, 16) && d + 'T03:00' <= v.en.slice(0, 16)) sleepAway.add(addDays(d, -1));
     }
   }
-  const workWins = [], counted = new Set();
-  let tour = null; // Startzeit der laufenden Tour
+  const workWins = [], counted = new Set(), tours = [];
+  let tour = null, cur = null; // laufende Tour
   const tripsDay = {};
   for (const t of acts) {
     const m = minOf(t.st);
     // Wer daheim oder in der Firma war, ist nicht mehr auf Tour
-    if (tour && (t.a === 'H' || t.a === 'F')) tour = null;
+    if (tour && (t.a === 'H' || t.a === 'F')) { tour = null; cur = null; }
     // Tour beginnt
     if (!tour) {
-      if (workday(t.d) && t.a === 'F' && t.b === 'X' && (m < 870 || dist(t.p2, home) > 20)) tour = t.st;
-      else if (workday(t.d) && t.a === 'H' && t.b === 'X' && m < 660 && !(tripsDay[t.d] || []).some(x => x.b === 'F')) tour = t.st;
-      else if (t.a === 'H' && t.b === 'X' && sleepAway.has(t.d) && workday(addDays(t.d, 1)) && dist(t.p2, home) > 40) tour = t.st;
-      else if (workday(t.d) && t.a === 'X' && m < 660 && sleepAway.has(addDays(t.d, -1))) tour = t.st; // Tag beginnt auswärts (Hotel)
+      let how = null;
+      if (workday(t.d) && t.a === 'F' && t.b === 'X' && (m < 870 || dist(t.p2, home) > 20)) how = 'F';
+      else if (workday(t.d) && t.a === 'H' && t.b === 'X' && m < 660 && !(tripsDay[t.d] || []).some(x => x.b === 'F')) how = 'H';
+      else if (t.a === 'H' && t.b === 'X' && sleepAway.has(t.d) && workday(addDays(t.d, 1)) && dist(t.p2, home) > AWAY) how = 'E';
+      else if (workday(t.d) && t.a === 'X' && m < 660 && sleepAway.has(addDays(t.d, -1))) how = 'O'; // Tag beginnt auswärts (Hotel)
+      if (how) { tour = t.st; cur = { from: t.d, to: t.d, how, km: 0, far: 0, farP: t.p2 }; tours.push(cur); }
     }
     (tripsDay[t.d] ||= []).push(t);
     const counts = !!tour && !(t.a !== 'X' && t.b !== 'X') && !isFree(t.d);
+    if (counts && cur) { cur.to = dayOf(t.en); if (t.car) cur.km += t.km; const fd = dist(t.p2, home); if (fd > cur.far) { cur.far = fd; cur.farP = t.p2; } }
     if (counts && t.car) {
       kmWork += t.km; const mo = t.d.slice(0, 7);
       kmWorkMonth[mo] = (kmWorkMonth[mo] || 0) + t.km; kmWorkDay[t.d] = (kmWorkDay[t.d] || 0) + t.km;
@@ -172,7 +202,16 @@ function analyse(opts) {
     // Tour endet bei Ankunft in Firma oder daheim
     if (tour && (t.b === 'F' || t.b === 'H')) tour = null;
     if (tour && isFree(t.d)) tour = null;
+    if (!tour) cur = null;
   }
+  // Touren, die nach Urlaub aussehen: nicht von der Firma gestartet, weit weg – obwohl man sonst von der Firma startet
+  const fromF = tours.filter(t => t.how === 'F').length, share = tours.length ? fromF / tours.length : 0;
+  for (const t of tours) {
+    t.km = Math.round(t.km); t.far = Math.round(t.far);
+    t.check = !!work && share >= 0.6 && (t.how === 'H' || t.how === 'E' || t.how === 'O') && t.far > 80;
+    if ((opts.ok || []).includes(t.from)) t.check = false;
+  }
+  const tourList = tours.filter(t => t.km >= 1);
   // Zeitfenster, in denen man "in der Arbeit" ist (inkl. Aufenthalte zwischen den Fahrten)
   const spans = [];
   { let cur = null;
@@ -232,20 +271,33 @@ function analyse(opts) {
   // --- Übernachtungen (Nacht > 40 km von daheim) ---
   const nights = new Map();
   for (const v of visits) {
-    if (dist(v.p, home) < 40) continue;
+    if (dist(v.p, home) < AWAY) continue;
     let d = dayOf(v.st);
     if (minOf(v.st) > 180) d = addDays(d, 1); // erste 03:00-Uhr nach Beginn
     while (d + 'T03:00' >= v.st.slice(0, 16) && d + 'T03:00' <= v.en.slice(0, 16)) {
       const night = addDays(d, -1);
-      if (!nights.has(night)) nights.set(night, v.p);
+      if (!nights.has(night)) nights.set(night, { p: v.p, pid: v.pid });
       d = addDays(d, 1);
     }
   }
-  const hotels = cluster([...nights].map(([n, p]) => ({ p, n })), 1.5).map(c => {
-    const ns = c.items.map(i => i.n).sort();
+  // Je Unterkunft gruppieren: Google-Place-ID, sonst Koordinaten auf ~100 m
+  const byStay = new Map();
+  for (const [n, x] of nights) {
+    const key = x.pid || (x.p[0].toFixed(3) + ',' + x.p[1].toFixed(3));
+    if (!byStay.has(key)) byStay.set(key, { p: x.p, pid: x.pid, ns: [] });
+    byStay.get(key).ns.push(n);
+  }
+  // Gleiche Unterkunft mit leicht anderem GPS-Punkt zusammenlegen (< 250 m)
+  const stays = [];
+  for (const c of [...byStay.values()].sort((x, y) => y.ns.length - x.ns.length)) {
+    const m = stays.find(x => dist(x.p, c.p) < 0.25);
+    if (m) m.ns.push(...c.ns); else stays.push(c);
+  }
+  const hotels = stays.map(c => {
+    const ns = c.ns.sort();
     // Arbeitsnacht = Nacht mitten in einer Arbeitstour
     const workN = ns.filter(n => inWork(n + 'T23:30') && !isFree(n));
-    return { lat: c.p[0], lon: c.p[1], nights: ns, work: workN.length };
+    return { lat: c.p[0], lon: c.p[1], pid: c.pid, nights: ns, work: workN.length };
   }).sort((a, b) => b.nights.length - a.nights.length);
 
   // --- Einsatzorte: Aufenthalte Mo–Fr 6–20 Uhr, auswärts ---
@@ -269,7 +321,7 @@ function analyse(opts) {
   // --- Rekorde ---
   const rec = Object.entries(kmDay).sort((a, b) => b[1] - a[1])[0] || ['', 0];
   return {
-    home, work, workAuto, firstDay, lastDay, months, heat, tl, hotels, sites,
+    home, work, workAuto, region, firstDay, lastDay, months, heat, tl, hotels, sites, tours: tourList, fromFirmShare: share,
     stats: {
       kmCar, kmWork, kmMonth, kmWorkMonth, kmWorkDay, modeKm,
       nightsAway: nights.size, hotelNights: hotels.reduce((a, h) => a + h.work, 0),
@@ -288,7 +340,13 @@ self.onmessage = async e => {
       RAW = normalize(JSON.parse(text));
     }
     if (!RAW) return;
-    postMessage({ result: analyse(e.data.opts || {}) });
+    const o = { ...(e.data.opts || {}) };
+    if (!o.region || o.region === 'auto') {
+      const first = analyse({ ...o, region: 'none' });
+      o.region = await autoRegion(first.home);
+      const r = analyse(o); r.regionAuto = true;
+      postMessage({ result: r });
+    } else postMessage({ result: analyse(o) });
   } catch (err) {
     postMessage({ error: String(err.message || err) });
   }
